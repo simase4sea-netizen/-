@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>グルメインフルエンサー パートナープログラム</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #1a1a1a;
+    --dark: #2c2c2c;
+    --mid: #555;
+    --light: #888;
+    --border: #e8e4dc;
+    --bg: #faf9f6;
+    --white: #ffffff;
+    --accent: #c8502a;
+    --accent-light: #fdf0eb;
+    --accent-dark: #9a3a1e;
+    --green: #2d6a4f;
+    --green-light: #e8f4ee;
+    --green-mid: #9fd0b8;
+    --gold: #b8923a;
+    --gold-light: #fdf4e3;
+  }
+
+  body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', YuGothic, sans-serif;
+    background: var(--bg);
+    color: var(--black);
+    font-size: 14px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page { max-width: 820px; margin: 0 auto; padding: 48px 32px; }
+
+  /* ─── TARGET ─── */
+  .target-bar {
+    background: var(--black);
+    color: #fff;
+    text-align: center;
+    padding: 12px 20px;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    margin-bottom: 0;
+  }
+
+  /* ─── COVER ─── */
+  .cover {
+    text-align: center;
+    padding: 64px 0 56px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 56px;
+  }
+
+  .cover-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--accent-dark);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+
+  .cover h1 {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', YuMincho, Georgia, serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--black);
+    margin-bottom: 20px;
+  }
+
+  .cover h1 span {
+    color: var(--accent-dark);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 2px;
+  }
+
+  .cover-sub {
+    font-size: 14px;
+    color: var(--mid);
+    max-width: 500px;
+    margin: 0 auto 32px;
+    line-height: 1.9;
+  }
+
+  .cover-offer-box {
+    display: inline-block;
+    background: var(--accent-light);
+    border: 1.5px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px 36px;
+    text-align: center;
+  }
+
+  .cover-offer-label {
+    font-size: 11px;
+    color: var(--accent-dark);
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .cover-offer-num {
+    font-family: 'Hiragino Mincho ProN', Georgia, serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--accent-dark);
+    line-height: 1;
+  }
+
+  .cover-offer-sub {
+    font-size: 12px;
+    color: var(--mid);
+    margin-top: 6px;
+  }
+
+  /* ─── SECTION ─── */
+  .section { margin-bottom: 60px; }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent-dark);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', YuMincho, Georgia, serif;
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+
+  .section-body {
+    font-size: 14px;
+    color: var(--dark);
+    line-height: 1.95;
+  }
+
+  /* ─── SYMPATHY BLOCK ─── */
+  .sympathy-intro {
+    background: var(--white);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 12px 12px 0;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    color: var(--dark);
+    line-height: 2;
+  }
+
+  /* ─── PAIN GRID ─── */
+  .pain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .pain-card {
+    background: var(--white);
+    border: 1px solid #f0d5c8;
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+
+  .pain-card .q {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .pain-card p {
+    font-size: 13px;
+    color: var(--dark);
+    line-height: 1.75;
+  }
+
+  /* ─── BULLET BENEFITS ─── */
+  .benefit-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .benefit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+
+  .benefit-check {
+    min-width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--green);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .benefit-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 5px;
+  }
+
+  .benefit-text {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.75;
+  }
+
+  /* ─── DATA BOX ─── */
+  .data-box {
+    background: var(--black);
+    color: #fff;
+    border-radius: 16px;
+    padding: 32px 28px;
+    margin-top: 20px;
+  }
+
+  .data-box-title {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: #aaa;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .data-item {
+    text-align: center;
+  }
+
+  .data-num {
+    font-family: 'Hiragino Mincho ProN', Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #f5c677;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .data-label {
+    font-size: 11px;
+    color: #aaa;
+    line-height: 1.5;
+  }
+
+  /* ─── REWARD ─── */
+  .reward-main {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  .reward-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 16px 24px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  .reward-body { padding: 28px 24px; }
+
+  .reward-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .reward-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+  .reward-cell { text-align: center; }
+  .reward-cell-label { font-size: 11px; color: var(--light); margin-bottom: 6px; letter-spacing: 0.06em; }
+
+  .reward-cell-value {
+    font-family: 'Hiragino Mincho ProN', Georgia, serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--black);
+  }
+
+  .reward-cell-value.accent { color: var(--accent-dark); }
+  .reward-cell-value.green { color: var(--green); }
+  .reward-cell-sub { font-size: 11px; color: var(--light); margin-top: 3px; }
+
+  /* ─── SIMULATION ─── */
+  .sim-box {
+    background: var(--green-light);
+    border: 1px solid var(--green-mid);
+    border-radius: 16px;
+    padding: 28px;
+    margin-top: 16px;
+  }
+
+  .sim-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.1em;
+    margin-bottom: 18px;
+  }
+
+  .sim-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(45,106,79,0.15);
+    font-size: 13px;
+  }
+
+  .sim-row:last-child { border-bottom: none; }
+  .sim-row .label { color: var(--dark); }
+  .sim-row .value { font-weight: 700; color: var(--green); }
+  .sim-row .value.big {
+    font-size: 22px;
+    font-family: 'Hiragino Mincho ProN', Georgia, serif;
+  }
+
+  .sim-note { font-size: 12px; color: var(--mid); margin-top: 14px; line-height: 1.7; }
+
+  /* ─── FLOW ─── */
+  .flow { margin-top: 20px; }
+
+  .flow-item {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 4px;
+  }
+
+  .flow-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 36px;
+  }
+
+  .flow-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--black);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .flow-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    min-height: 20px;
+  }
+
+  .flow-content { padding: 4px 0 28px; }
+
+  .flow-content-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 7px;
+  }
+
+  .flow-content-body {
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.85;
+  }
+
+  .flow-tip {
+    margin-top: 10px;
+    background: var(--gold-light);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--gold);
+    line-height: 1.7;
+    font-weight: 500;
+  }
+
+  /* ─── SCRIPT ─── */
+  .script-box {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+
+  .script-header {
+    background: var(--dark);
+    color: #fff;
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .script-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .script-body { padding: 20px 22px; }
+
+  .script-line {
+    margin-bottom: 14px;
+    padding-left: 14px;
+    border-left: 2px solid var(--accent);
+    font-size: 14px;
+    color: var(--dark);
+    line-height: 1.9;
+  }
+
+  .script-line:last-child { margin-bottom: 0; }
+
+  .script-line .hl { font-weight: 700; color: var(--accent-dark); }
+
+  /* ─── PROOF / VOICE ─── */
+  .proof-box {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+
+  .proof-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 6px;
+  }
+
+  .proof-card {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-left: 3px solid var(--gold);
+  }
+
+  .proof-num {
+    font-family: 'Hiragino Mincho ProN', Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .proof-label { font-size: 12px; color: var(--mid); }
+
+  /* ─── FAQ ─── */
+  .faq-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .faq-item { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+
+  .faq-q {
+    padding: 16px 20px;
+    background: var(--white);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--black);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .faq-icon {
+    min-width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+
+  .faq-a {
+    padding: 14px 20px 16px 52px;
+    background: var(--bg);
+    font-size: 13px;
+    color: var(--mid);
+    line-height: 1.85;
+  }
+
+  /* ─── NARROW DOWN ─── */
+  .narrow-box {
+    background: var(--accent-light);
+    border: 1.5px solid var(--accent);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .narrow-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-dark);
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  .narrow-body {
+    font-size: 14px;
+    color: var(--dark);
+    line-height: 1.9;
+  }
+
+  /* ─── CTA ─── */
+  .cta-box {
+    background: var(--black);
+    color: #fff;
+    border-radius: 20px;
+    padding: 48px 36px;
+    text-align: center;
+    margin-top: 56px;
+  }
+
+  .cta-box h2 {
+    font-family: 'Hiragino Mincho ProN', Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+
+  .cta-body {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 28px;
+    line-height: 1.9;
+  }
+
+  .cta-steps {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .cta-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px;
+    border-right: 1px solid #333;
+  }
+
+  .cta-step:last-child { border-right: none; }
+
+  .cta-step-num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #555;
+    color: #f5c677;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cta-step-text { font-size: 12px; color: #888; text-align: center; line-height: 1.5; }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #06C755;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 100px;
+    padding: 16px 36px;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+  }
+
+  .cta-ps {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 1px; background: var(--border); margin: 48px 0; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    text-align: center;
+    padding-top: 28px;
+    font-size: 11px;
+    color: var(--light);
+    letter-spacing: 0.06em;
+    line-height: 1.9;
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 600px) {
+    .page { padding: 32px 20px; }
+    .cover { padding: 48px 0 40px; }
+    .cover h1 { font-size: 26px; }
+    .pain-grid { grid-template-columns: 1fr; }
+    .data-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .data-num { font-size: 22px; }
+    .reward-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .reward-cell-value { font-size: 18px; }
+    .proof-grid { grid-template-columns: 1fr; }
+    .cta-steps { flex-direction: column; gap: 12px; align-items: center; }
+    .cta-step { border-right: none; border-bottom: 1px solid #333; padding-bottom: 12px; width: 100%; }
+    .cta-step:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ターゲット明示 -->
+<div class="target-bar">グルメインフルエンサー様 限定のご提案</div>
+
+<div class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <p class="cover-eyebrow">Partner Program Proposal</p>
+    <h1>あなたの「美味しい」が<br><span>毎月の継続収入</span>に変わる</h1>
+    <p class="cover-sub">飲食店に行くたびに、紹介するたびに。<br>解約されない限り、毎月自動で報酬が振り込まれる仕組みです。</p>
+    <div class="cover-offer-box">
+      <p class="cover-offer-label">紹介1件あたりの継続報酬</p>
+      <p class="cover-offer-num">月 8,800円</p>
+      <p class="cover-offer-sub">契約が続く限り毎月 / 弊社継続率 95%</p>
+    </div>
+  </div>
+
+  <!-- SYMPATHY -->
+  <div class="section">
+    <p class="section-label">Do you have this feeling?</p>
+    <h2 class="section-title">こんな状況、思い当たりませんか？</h2>
+
+    <div class="sympathy-intro">
+      グルメインフルエンサーとして飲食店を訪れ、美味しいものを紹介する。<br>
+      フォロワーも反応してくれる。でも収益は…<br>
+      <strong>「案件がなければ収入ゼロ」という現実</strong>に、もやもやしていませんか？
+    </div>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="q">📉</div>
+        <p>案件ごとに収入が変わる。<br>来月いくら入るか<br>読めない不安がある。</p>
+      </div>
+      <div class="pain-card">
+        <div class="q">💬</div>
+        <p>「このお店、SNS頑張りたいんだけど」と言われても、自分では運用できず紹介先もなかった。</p>
+      </div>
+      <div class="pain-card">
+        <div class="q">🍽️</div>
+        <p>飲食店との信頼関係はある。<br>でもそこから先の<br>マネタイズができていない。</p>
+      </div>
+      <div class="pain-card">
+        <div class="q">⏰</div>
+        <p>紹介・口コミで収益化しようとしても、継続して入る仕組みがなく一過性で終わる。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLUTION -->
+  <div class="section">
+    <p class="section-label">Solution</p>
+    <h2 class="section-title">このプログラムで<br>3つのことが変わります</h2>
+    <div class="benefit-list">
+      <div class="benefit-item">
+        <div class="benefit-check">✓</div>
+        <div>
+          <p class="benefit-title">「紹介したら終わり」が「紹介したらずっと入る」に変わる</p>
+          <p class="benefit-text">飲食店1店舗を紹介していただくだけで、その店が契約を続ける限り毎月8,800円が自動で振り込まれます。5店舗なら月44,000円。10店舗なら月88,000円。案件がなくても収入が積み上がっていく仕組みです。</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-check">✓</div>
+        <div>
+          <p class="benefit-title">「SNSどうすればいい？」に答えられるようになる</p>
+          <p class="benefit-text">飲食店オーナーから「SNS伸ばしたい」と言われたとき、「いい会社知ってます」と紹介するだけ。あなたが運用するわけではないので、専門知識も作業も一切不要。ただ繋ぐだけです。</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <div class="benefit-check">✓</div>
+        <div>
+          <p class="benefit-title">あなたの発信が飲食店の集客に直接貢献できる</p>
+          <p class="benefit-text">あなたが紹介したお店のInstagramが伸びていく。あなたのフォロワーがそのお店に来店する。あなたの「美味しい」という声がお店の売上につながる。インフルエンサーとして本当の意味で価値を提供できます。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA PROOF -->
+  <div class="section">
+    <p class="section-label">Why us?</p>
+    <h2 class="section-title">なぜ弊社への紹介なのか<br>数字でお伝えします</h2>
+    <p class="section-body">紹介する先が信頼できなければ、あなたの飲食店との関係に傷がつきます。<br>だから、実績を正直にお伝えします。</p>
+
+    <div class="data-box">
+      <p class="data-box-title">ACTUAL PERFORMANCE DATA</p>
+      <div class="data-grid">
+        <div class="data-item">
+          <p class="data-num">200<span style="font-size:16px;">店舗</span></p>
+          <p class="data-label">累計支援<br>店舗実績</p>
+        </div>
+        <div class="data-item">
+          <p class="data-num">8<span style="font-size:16px;">×</span></p>
+          <p class="data-label">最大売上<br>改善倍率</p>
+        </div>
+        <div class="data-item">
+          <p class="data-num">95<span style="font-size:16px;">%</span></p>
+          <p class="data-label">契約継続率<br>（業界平均の約2倍）</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="proof-box" style="margin-top:16px;">
+      <p style="font-size:13px; color:var(--mid); margin-bottom:16px; font-weight:700; letter-spacing:0.08em;">SUPPORTED BRANDS — 支援実績の一部</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">鰻の成瀬</p>
+          <p style="font-size:11px; color:var(--mid);">世界一の鰻チェーン／本部サポート</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">こがね製麺所</p>
+          <p style="font-size:11px; color:var(--mid);">香川県うどん店 店舗数1位</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">ぴこぴこ精肉店</p>
+          <p style="font-size:11px; color:var(--mid);">香川県焼肉店 店舗数1位</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">花月嵐</p>
+          <p style="font-size:11px; color:var(--mid);">全国展開ラーメンチェーン</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">田所商店</p>
+          <p style="font-size:11px; color:var(--mid);">全国展開みそラーメンチェーン</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">花木流味噌</p>
+          <p style="font-size:11px; color:var(--mid);">飲食店支援</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">飴のち林檎</p>
+          <p style="font-size:11px; color:var(--mid);">自社／りんご飴専門店</p>
+        </div>
+        <div style="background:var(--bg); border-radius:8px; padding:12px 14px;">
+          <p style="font-size:13px; font-weight:700; color:var(--black); margin-bottom:3px;">出世魚</p>
+          <p style="font-size:11px; color:var(--mid);">自社／魚焼肉・海鮮居酒屋</p>
+        </div>
+      </div>
+      <p style="font-size:12px; color:var(--mid); margin-top:14px; line-height:1.7;">他、カフェ・焼肉・ラーメン・居酒屋など個人飲食店多数。大手チェーンから個人店まで幅広く対応しているから、紹介しやすい実績があります。</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- REWARD -->
+  <div class="section">
+    <p class="section-label">Reward details</p>
+    <h2 class="section-title">報酬の詳細</h2>
+    <p class="section-body">紹介していただいた飲食店が契約した翌月から、契約が続く限り毎月お支払いします。</p>
+
+    <div class="reward-main">
+      <div class="reward-header">継続報酬プログラム — 解約されるまで毎月振込</div>
+      <div class="reward-body">
+        <div class="reward-row">
+          <div class="reward-cell">
+            <p class="reward-cell-label">サービス月額</p>
+            <p class="reward-cell-value">¥44,000</p>
+          </div>
+          <div class="reward-cell">
+            <p class="reward-cell-label">報酬率</p>
+            <p class="reward-cell-value accent">20%</p>
+          </div>
+          <div class="reward-cell">
+            <p class="reward-cell-label">月次報酬</p>
+            <p class="reward-cell-value green">¥8,800</p>
+            <p class="reward-cell-sub">1件あたり・毎月</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-box">
+      <p class="sim-title">収入シミュレーション（継続率95%で計算）</p>
+      <div class="sim-row">
+        <span class="label">3件紹介・継続中の場合（月）</span>
+        <span class="value">¥26,400</span>
+      </div>
+      <div class="sim-row">
+        <span class="label">5件紹介・継続中の場合（月）</span>
+        <span class="value">¥44,000</span>
+      </div>
+      <div class="sim-row">
+        <span class="label">10件紹介・継続中の場合（月）</span>
+        <span class="value">¥88,000</span>
+      </div>
+      <div class="sim-row">
+        <span class="label">10件・12ヶ月継続した場合（年間）</span>
+        <span class="value big">¥1,056,000</span>
+      </div>
+      <p class="sim-note">※ 弊社の継続率は95%。紹介いただいた店舗の運用成果を責任を持って出し続けます。<br>※ 報酬は毎月末締め・翌月末払い。簡単な覚書締結後にスタートします。</p>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title">紹介の流れ — あなたがやることは最小限</h2>
+
+    <div class="flow">
+      <div class="flow-item">
+        <div class="flow-left">
+          <div class="flow-circle">1</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <p class="flow-content-title">訪問・交流した飲食店で「SNSの話題」を出す</p>
+          <p class="flow-content-body">「最近Instagramの反応どうですか？」と自然に聞くだけ。グルメインフルエンサーだからこそ、この会話は不自然ではありません。</p>
+          <div class="flow-tip">「自分のフォロワーがよく来てくれてるお店に、ちゃんとSNSを伸ばしてほしい」という自然な動機があります。</div>
+        </div>
+      </div>
+
+      <div class="flow-item">
+        <div class="flow-left">
+          <div class="flow-circle">2</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <p class="flow-content-title">「良い会社があります」と一言伝える</p>
+          <p class="flow-content-body">「飲食店専門で100店舗以上の実績がある会社を知ってて、私も実際に信頼してるんですよ」と伝えるだけ。詳しい説明は弊社が行います。あとはLINEで一言連絡するだけです。</p>
+        </div>
+      </div>
+
+      <div class="flow-item">
+        <div class="flow-left">
+          <div class="flow-circle">3</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <p class="flow-content-title">弊社LINEに「紹介したいお店がある」と連絡</p>
+          <p class="flow-content-body">お店の名前と簡単な状況を伝えてください。あとは弊社が直接そのお店にアプローチします。あなたの手間はここで完全に終わりです。</p>
+        </div>
+      </div>
+
+      <div class="flow-item">
+        <div class="flow-left">
+          <div class="flow-circle">4</div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-content">
+          <p class="flow-content-title">成約 → 翌月から毎月振込スタート</p>
+          <p class="flow-content-body">契約成立の翌月から、毎月末日に指定口座へ自動振込されます。あなたが何もしなくても、その店が契約を続ける限り振込が続きます。</p>
+          <div class="flow-tip">弊社の継続率は95%。つまり1年後も95%のお店は契約を続けています。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- TALK SCRIPT -->
+  <div class="section">
+    <p class="section-label">Talk script</p>
+    <h2 class="section-title">使えるトークスクリプト</h2>
+    <p class="section-body">グルメインフルエンサーとして自然に使えるセリフをそのまま使ってください。</p>
+
+    <div class="script-box">
+      <div class="script-header">
+        <span class="script-dot" style="background:#e74c3c;"></span>
+        <span class="script-dot" style="background:#e67e22;"></span>
+        <span class="script-dot" style="background:#2ecc71;"></span>
+        <span style="margin-left:6px;">来店・投稿後の自然な会話から</span>
+      </div>
+      <div class="script-body">
+        <div class="script-line">
+          「いつも来させてもらってるんですけど、最近<span class="hl">Instagramってどうやって運用されてます？</span>フォロワーさんからもこのお店よく聞かれるんで、もっと伸びたらいいなって思ってて。」
+        </div>
+        <div class="script-line">
+          オーナーの反応を見て「自分でやってるけど大変で…」「あんまり伸びなくて」などの言葉が出たら続ける。
+        </div>
+        <div class="script-line">
+          「実は私が信頼してる<span class="hl">飲食店専門のSNS運用代行の会社</span>があって、200店舗以上やってて継続率も95%なんですよ。月44,000円で投稿から分析まで全部やってくれて、実際に結果出てるお店を私も知ってるので。よかったら一度話だけでも聞いてみますか？私から紹介しますよ。」
+        </div>
+      </div>
+    </div>
+
+    <div class="script-box" style="margin-top:12px;">
+      <div class="script-header">
+        <span class="script-dot" style="background:#3498db;"></span>
+        <span style="margin-left:6px;">「自分でやってるから大丈夫」と言われたとき</span>
+      </div>
+      <div class="script-body">
+        <div class="script-line">
+          「そうなんですね。でも飲食店の経営しながらSNS毎日投稿するって、<span class="hl">結構時間取られませんか？</span>料理や接客に集中したい時間がSNSに取られてるって話もよく聞くので。もし気が向いたら話だけでも聞いてみてください。別に急ぎじゃないので。」
+        </div>
+      </div>
+    </div>
+
+    <div class="script-box" style="margin-top:12px;">
+      <div class="script-header">
+        <span class="script-dot" style="background:#9b59b6;"></span>
+        <span style="margin-left:6px;">DM・コメントで繋がっている場合</span>
+      </div>
+      <div class="script-body">
+        <div class="script-line">
+          「いつも投稿拝見してます。少し前にも来店させてもらったんですが、<span class="hl">SNS運用で良い方法があって</span>、ちょっとお話したいことがあるんですよ。もしよかったらDMで少し話してもいいですか？」
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NARROW DOWN -->
+  <div class="section">
+    <p class="section-label">Important notice</p>
+    <h2 class="section-title">こんな方に向いています</h2>
+
+    <div class="narrow-box">
+      <p class="narrow-title">このプログラムが最も合う方</p>
+      <p class="narrow-body" style="text-align:left;">
+        ✅ 飲食店オーナーと日常的に接点がある<br>
+        ✅ フォロワーに飲食店・グルメ系が多い<br>
+        ✅ 特定の飲食店と継続的な関係がある<br>
+        ✅ 案件収入以外の安定した収入源を作りたい<br>
+        ✅ 紹介するだけ・作業なしで収益化したい
+      </p>
+    </div>
+
+    <div style="background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px 24px; margin-top:14px;">
+      <p style="font-size:13px; color:var(--mid); line-height:1.85;">フォロワー数は問いません。1,000人でも5万人でも、飲食店との信頼関係があることの方が重要です。あなたのフォロワーが実際にそのお店に来ていれば、「あなたの紹介」は最強の信頼になります。</p>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="section">
+    <p class="section-label">FAQ</p>
+    <h2 class="section-title">よくあるご質問</h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q"><span class="faq-icon">Q</span>紹介するのに何か準備や資格は必要ですか？</div>
+        <div class="faq-a">一切不要です。このページを見せていただくか、「良い会社があります」と口頭で伝えるだけ。あとは全て弊社が対応します。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="faq-icon">Q</span>フォロワーが少なくても大丈夫ですか？</div>
+        <div class="faq-a">大丈夫です。重要なのはフォロワー数ではなく「飲食店オーナーとの関係性」です。1,000フォロワーでも信頼されているインフルエンサーの紹介は、フォロワー数万人の無名アカウントより影響力があります。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="faq-icon">Q</span>紹介したお店が解約した場合は？</div>
+        <div class="faq-a">解約した月をもって報酬の発生は終了します。ただし弊社の継続率は95%です。弊社が責任を持って成果を出すことで、できる限り長く続けていただけるよう全力で運用します。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="faq-icon">Q</span>自分の投稿・発信活動と両立できますか？</div>
+        <div class="faq-a">完全に両立できます。あなたがやることは「紹介する」だけです。運用・管理・クライアントとのやり取りはすべて弊社が行います。普段通りに飲食店を訪問・投稿しながら、気に入ったお店を紹介するだけです。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="faq-icon">Q</span>紹介できる件数の上限はありますか？</div>
+        <div class="faq-a">基本的に上限はありません。ただし弊社の受け入れキャパシティの状況によって、タイミングのご相談をお願いする場合があります。多くご紹介いただける方は事前にご相談ください。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q"><span class="faq-icon">Q</span>契約書などは必要ですか？</div>
+        <div class="faq-a">報酬発生前に、数ページの簡単なパートナー覚書を締結します。内容は平易なものです。疑問点はすべて事前にご説明しますのでご安心ください。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-box">
+    <h2>まずLINEで<br>話を聞かせてください</h2>
+    <p class="cta-body">難しい話は一切しません。15分の雑談レベルのお話から始めます。<br>合わなければそれで終わりです。気軽にご連絡ください。</p>
+    <div class="cta-steps">
+      <div class="cta-step">
+        <div class="cta-step-num">1</div>
+        <p class="cta-step-text">LINEで<br>ご連絡</p>
+      </div>
+      <div class="cta-step">
+        <div class="cta-step-num">2</div>
+        <p class="cta-step-text">15〜30分<br>お話し</p>
+      </div>
+      <div class="cta-step">
+        <div class="cta-step-num">3</div>
+        <p class="cta-step-text">覚書締結<br>紹介スタート</p>
+      </div>
+    </div>
+    <a href="https://line.me/ti/p/MG3SnqR9Sl" class="cta-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.03 2 11c0 2.89 1.42 5.47 3.65 7.18L5 21l2.97-1.55C9.2 19.79 10.57 20 12 20c5.52 0 10-4.03 10-9S17.52 2 12 2z"/></svg>
+      LINEでお問い合わせ・ご参加
+    </a>
+    <p class="cta-ps">
+      ※ 返信は基本的に当日中にお送りします<br>
+      ※ 強引な勧誘は一切しません。合わなければその場でお断りいただけます
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>本資料の内容・報酬条件は予告なく変更される場合があります。詳細は覚書にて確認ください。</p>
+  </div>
+
+</div>
+</body>
+</html>
