@@ -75,6 +75,8 @@
       if (e.key === S.KEY) { S.load(); renderUser(); route(); U.toast('別のタブでデータが更新されたため、表示を更新しました'); }
     });
     route();
+    // 自動選定：更新間隔を過ぎたキャンペーンを、アプリを開いたときに自動で実行
+    setTimeout(() => { if (root.FS.infautoui) root.FS.infautoui.autoRunAll().catch((e) => console.warn(e)); }, 1500);
   }
 
   root.FS.app = { route, renderUser, init };

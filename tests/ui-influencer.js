@@ -64,10 +64,10 @@ const SHOTS = process.env.SHOTS || '';
   await shot('inf03_link');
   assert.match(await p.textContent('main'), /候補にした理由/);
   assert.match(await p.textContent('main'), /懸念点/);
-  await p.click('#mkDraft');
+  // 優先候補には自動選定で連絡文の下書きが作られている（無ければ作る）
+  if (await p.$('#mkDraft')) { await p.click('#mkDraft'); }
   await p.waitForSelector('#ctext');
   assert.match(await p.inputValue('#ctext'), /【テスト】高松グルメ子 様/);
-  assert.match(await p.inputValue('#status'), /連絡文作成/);
   // 承認前は「送信用にコピー」が無い
   assert.equal(await p.$('[data-wf=copy]'), null);
   // 承認せずに連絡済みにしようとすると確認画面

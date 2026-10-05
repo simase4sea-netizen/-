@@ -14,6 +14,7 @@
       id: S.uid('camp'), title: '', storeId: null, address: '', areas: [], radiusKm: '', genres: [], dishes: '', products: '',
       pricePerPerson: '', target: '', purposes: [], platforms: [], formats: [], compensation: 'undecided', budgetMax: '',
       offer: '', visitDates: '', postPeriod: '', postConditions: '', requiredTags: '', mentions: '', avoid: '', notes: '',
+      followerMin: '', followerMax: '', searchKeywords: '', lat: '', lng: '', autoSearch: true, lastAutoRunAt: null,
       proposal: null, createdAt: Date.now(), createdBy: S.user(), updatedAt: Date.now(), history: [],
     };
   }
@@ -91,6 +92,11 @@
       '<div class="panel"><h2>店舗の内容</h2>' + t('genres', '店舗ジャンル', camp.genres, '例：スイーツ、カフェ') + t('dishes', '料理', camp.dishes, '例：ケーキ、パフェ') + t('products', '主な商品', camp.products) +
       '<div class="row"><div class="field">' + '<label>客単価</label><input type="text" id="price" value="' + esc(camp.pricePerPerson) + '" placeholder="例：1,500円"></div><div class="field"><label>ターゲット層</label><input type="text" id="target" value="' + esc(camp.target) + '" placeholder="例：20〜30代女性"></div></div></div>' +
       '</div><div>' +
+      '<div class="panel"><h2>自動選定の条件（地域・フォロワー数・ジャンル）</h2><p class="small muted">地域は「来店可能エリア」「所在地」、ジャンルは「店舗ジャンル」「料理」「商品」を使います。フォロワー数の範囲を入れると、範囲外・未確認の候補は自動選定されません。</p>' +
+      '<div class="row"><div class="field"><label>フォロワー数（下限）</label><input type="text" id="fmin" value="' + esc(camp.followerMin) + '" placeholder="例：3000"></div><div class="field"><label>フォロワー数（上限）</label><input type="text" id="fmax" value="' + esc(camp.followerMax) + '" placeholder="例：100000"></div></div>' +
+      t('skw', '追加の検索語（任意・区切りは「、」）', camp.searchKeywords, '例：高松 カフェ巡り、香川スイーツ') +
+      '<div class="row"><div class="field"><label>店舗の緯度（任意）</label><input type="text" id="lat" value="' + esc(camp.lat) + '" placeholder="例：34.34"></div><div class="field"><label>経度（任意）</label><input type="text" id="lng" value="' + esc(camp.lng) + '" placeholder="例：134.04"></div></div><div class="hint">緯度経度と検索半径を入れると、YouTubeの位置情報付き動画も検索します。</div>' +
+      '<label class="small"><input type="checkbox" id="autoS"' + (camp.autoSearch !== false ? ' checked' : '') + '> このキャンペーンで自動選定を行う</label></div>' +
       '<div class="panel"><h2>目的と投稿</h2><div class="field"><label>キャンペーンの目的</label>' + chk('purpose', I.PURPOSES, camp.purposes) + '</div>' +
       '<div class="field"><label>希望するSNS</label>' + chk('platform', ['instagram', 'tiktok', 'youtube', 'x'], camp.platforms, I.PLATFORMS) + '</div>' +
       '<div class="field"><label>希望する投稿形式</label>' + chk('format', I.FORMATS, camp.formats) + '</div></div>' +
@@ -115,20 +121,26 @@
         pricePerPerson: v('price'), target: v('target'), purposes: checked('purpose'), platforms: checked('platform'), formats: checked('format'),
         compensation: (U.$('[name=comp]:checked', pane) || {}).value || 'undecided', budgetMax: v('budget') ? I.parseNum(v('budget')) : '', offer: v('offer'), visitDates: v('visit'), postPeriod: v('period'),
         postConditions: v('cond'), requiredTags: v('tags'), mentions: v('mentions'), avoid: v('avoid'), notes: v('notes'),
+        followerMin: v('fmin') ? I.parseNum(v('fmin')) : '', followerMax: v('fmax') ? I.parseNum(v('fmax')) : '', searchKeywords: v('skw'), lat: v('lat'), lng: v('lng'), autoSearch: U.$('#autoS', pane).checked,
       };
       const errs = [];
       if (!next.title) errs.push('キャンペーン名を入力してください');
       if (!next.storeId) errs.push('店舗を選択してください（「店舗・案件」画面で登録できます）');
       if (v('budget') && next.budgetMax === null) errs.push('予算上限は数値で入力してください');
+      if ((v('fmin') && next.followerMin === null) || (v('fmax') && next.followerMax === null)) errs.push('フォロワー数は数値で入力してください');
+      if (next.followerMin !== '' && next.followerMax !== '' && next.followerMin > next.followerMax) errs.push('フォロワー数の下限が上限より大きくなっています');
+      if ((next.lat || next.lng) && !(isFinite(Number(next.lat)) && isFinite(Number(next.lng)) && Math.abs(Number(next.lat)) <= 90 && Math.abs(Number(next.lng)) <= 180)) errs.push('緯度・経度を正しく入力してください');
       if (errs.length) { U.toast(errs.join('／'), 'error'); return; }
       const changed = Object.keys(next).filter((k) => JSON.stringify(camp[k]) !== JSON.stringify(next[k]));
       Object.assign(camp, next, { updatedAt: Date.now() });
       if (isNew) { st.campaigns.push(camp); S.log('キャンペーンを作成しました', { type: 'campaign', id: camp.id, label: camp.title }, '店舗：' + storeName(camp), camp); }
       else if (changed.length) S.log('キャンペーン条件を変更しました', { type: 'campaign', id: camp.id, label: camp.title }, '変更項目数：' + changed.length, camp);
+      const condChanged = isNew || changed.some((k) => ['address', 'areas', 'genres', 'dishes', 'products', 'followerMin', 'followerMax', 'searchKeywords', 'platforms', 'lat', 'lng', 'radiusKm'].includes(k));
+      if (condChanged) camp.lastAutoRunAt = null; // 条件が変わったら次に開いたとき自動選定をやり直す
       S.save(true);
       U.toast('保存しました', 'ok');
-      location.hash = '#/inf/c/' + camp.id + '?tab=' + (isNew ? 'cands' : 'cond');
-      if (!isNew) root.FS.app.route();
+      const nextHash = '#/inf/c/' + camp.id + '?tab=' + (isNew || condChanged ? 'cands' : 'cond');
+      if (location.hash === nextHash) root.FS.app.route(); else location.hash = nextHash;
     });
   }
 
@@ -140,7 +152,8 @@
     const sel = new Set(JSON.parse(sessionStorage.getItem('infSel-' + camp.id) || '[]'));
     const all = rowsFor(camp);
     const rows = sortRows(I.filterForCampaign(all, Object.assign({ threshold: st.settings.fitThreshold }, f)));
-    pane.innerHTML =
+    const AU = root.FS.infautoui;
+    pane.innerHTML = AU.runSummaryHtml(camp) +
       '<div class="panel"><div class="row">' +
       '<div class="field" style="flex:2 1 240px"><label>キーワード（地域・駅名・料理・商品・ハッシュタグ）</label><input type="search" id="fq" value="' + esc(f.text || '') + '" placeholder="例：瓦町 スイーツ"></div>' +
       '<div class="field"><label>SNS</label><select id="fp"><option value="">すべて</option>' + Object.keys(I.PLATFORMS).map((k) => '<option value="' + k + '"' + (f.platform === k ? ' selected' : '') + '>' + I.PLATFORMS[k] + '</option>').join('') + '</select></div>' +
@@ -149,14 +162,15 @@
       '<div class="btns small"><label><input type="checkbox" id="fr"' + (f.regionFit ? ' checked' : '') + '> 地域が合う（所在地・来店エリア）</label><label><input type="checkbox" id="fg"' + (f.genreFit ? ' checked' : '') + '> ジャンルが合う</label><label><input type="checkbox" id="fpu"' + (f.purposeFit ? ' checked' : '') + '> 目的・SNS・形式が合う</label><label><input type="checkbox" id="fi"' + (f.hideInsufficient ? ' checked' : '') + '> 判定材料不足を隠す</label>' +
       '<span class="muted">「合う」＝その項目が' + st.settings.fitThreshold + '点以上（未確認は含めない）</span></div></div>' +
       '<div class="btns" style="margin-bottom:10px"><button class="btn" id="addSearch">検索結果をまとめて登録</button><a class="btn" href="#/inf/cand/new">候補者を1件登録</a><button class="btn primary" id="toCompare">選んだ候補を比較（' + sel.size + '件）</button><span class="small muted">' + rows.length + '／' + all.length + '件を表示</span></div>' +
-      (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>比較</th><th>候補者</th><th>活動地域・ジャンル</th><th class="num">フォロワー数</th><th>評価点</th><th style="min-width:260px">評価理由・懸念点</th><th>費用</th><th>充足度</th><th>起用状況</th></tr></thead><tbody>' +
+      (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>比較</th><th>候補者</th><th>起用状況</th><th>活動地域・ジャンル</th><th class="num">フォロワー数</th><th>評価点</th><th style="min-width:150px">3条件（地域・フォロワー数・ジャンル）</th><th style="min-width:240px">評価理由・懸念点</th><th>費用</th><th>充足度</th></tr></thead><tbody>' +
         rows.map(({ cand, ev, link }) => '<tr><td><input type="checkbox" data-sel="' + cand.id + '"' + (sel.has(cand.id) ? ' checked' : '') + '></td>' +
           '<td><a href="#" data-open="' + cand.id + '"><b>' + esc(cand.displayName || '名称未入力') + '</b></a><div class="small">@' + esc(cand.handle) + '・' + esc(I.PLATFORMS[cand.platform]) + '</div><div class="small"><a href="' + esc(cand.profileUrl) + '" target="_blank" rel="noopener noreferrer">プロフィールを開く</a></div></td>' +
+          '<td>' + X.statusSelect(link ? link.status : '未確認', 'data-status="' + cand.id + '"') + (link && link.autoManaged === false ? '<div class="small muted">手動で設定</div>' : link && link.autoJudge ? '<div class="small muted">自動選定</div>' : '') + '</td>' +
           '<td class="small">' + esc(I.toList(cand.areas).join('、') || '地域未確認') + '<div class="muted">' + esc(I.toList(cand.genres).join('、') || 'ジャンル未確認') + '</div></td>' +
           '<td class="num">' + X.factView(cand.followers, X.fmtNum) + '</td><td class="nowrap">' + X.scoreView(ev) + '</td>' +
+          '<td class="small">' + root.FS.infauto.judge(camp, cand, ev, st.settings).reasons.map((r) => '<div style="color:' + (r[0] === '○' ? 'var(--ok)' : 'var(--danger)') + '">' + esc(r.length > 60 ? r.slice(0, 60) + '…' : r) + '</div>').join('') + '</td>' +
           '<td class="small">' + (ev.reasons.slice(0, 2).map((r) => '<div>✓ ' + esc(r) + '</div>').join('') || '<div class="muted">高評価の根拠はまだありません</div>') + ev.concerns.slice(0, 2).map((r) => '<div style="color:var(--warn)">! ' + esc(r) + '</div>').join('') + '</td>' +
-          '<td class="nowrap">' + X.feeView(cand.fee) + '</td><td>' + ev.completeness.pct + '%</td>' +
-          '<td>' + X.statusSelect(link ? link.status : '未確認', 'data-status="' + cand.id + '"') + '</td></tr>').join('') + '</tbody></table></div>'
+          '<td class="nowrap">' + X.feeView(cand.fee) + '</td><td>' + ev.completeness.pct + '%</td></tr>').join('') + '</tbody></table></div>'
         : '<div class="empty">' + (all.length ? '条件に合う候補がいません。絞り込みを緩めてください。' : '候補者が登録されていません。「検索結果をまとめて登録」などから追加してください。') + '</div>');
 
     const save = () => {
@@ -177,6 +191,21 @@
       location.hash = '#/inf/c/' + camp.id + '?tab=compare';
     });
     U.$('#addSearch', pane).addEventListener('click', () => X.registerSearch(camp, () => candsTab(pane, camp)));
+    const runBtn = U.$('#runAuto', pane);
+    runBtn.addEventListener('click', async () => {
+      runBtn.disabled = true; runBtn.textContent = '自動選定を実行中…';
+      const log = await AU.run(camp, '手動実行');
+      if (log) U.toast('自動選定を実行しました：条件合致 ' + log.passed + '件', log.errors.length ? 'error' : 'ok');
+      candsTab(pane, camp);
+    });
+    if (!pane.dataset.autoTried) {
+      pane.dataset.autoTried = '1';
+      AU.autoRunIfDue(camp, () => {
+        // 実行中に画面が描き直されていても、表示中の候補一覧を最新にする
+        const cur = document.getElementById('pane');
+        if (cur && location.hash.indexOf('#/inf/c/' + camp.id) === 0 && /tab=cands/.test(location.hash)) candsTab(cur, camp);
+      });
+    }
     U.$$('[data-open]', pane).forEach((a) => a.addEventListener('click', (e) => {
       e.preventDefault();
       const l = X.ensureLink(camp.id, a.dataset.open);
@@ -467,6 +496,9 @@
       '<li><b>キャンペーン適合</b>：希望SNS・希望投稿形式・目的（動画素材なら動画投稿、来店促進なら地域適合70以上）との一致の平均。</li>' +
       '<li><b>費用</b>：確認済み料金と予算上限・依頼の形（無料招待／有償）との比較。料金未確認は未確認のまま。</li>' +
       '<li>未確認の項目は0点にせず、評価できた項目だけで加重平均。各項目は候補ごとに担当者評価（理由必須）で上書きできます。</li></ul></div>';
+    const autoBox = document.createElement('div');
+    main.appendChild(autoBox);
+    root.FS.infautoui.renderSettings(autoBox);
     U.$('#save', main).addEventListener('click', () => {
       const errs = [];
       const num = (v, label) => { const n = Number(v); if (!isFinite(n) || n < 0) { errs.push(label + 'は0以上の数値で入力してください'); return null; } return n; };

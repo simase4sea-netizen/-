@@ -104,9 +104,12 @@
   }
 
   // 起用状況の変更（履歴を残す）。連絡文が承認されていない状態で「連絡済み」にする場合は確認する。
-  async function changeStatus(camp, cand, to, note) {
+  // opts.auto：自動選定による変更（確認画面を出さず、担当者の手動変更扱いにしない）
+  async function changeStatus(camp, cand, to, note, opts) {
+    const auto = !!(opts && opts.auto);
     const l = ensureLink(camp.id, cand.id);
     const from = l.status;
+    if (!auto) l.autoManaged = false; // 担当者が手動で変えた候補は、以後の自動選定で変更しない
     if (from === to) return true;
     if (to === '連絡済み' && !(l.contact && (l.contact.status === 'approved' || l.contact.status === 'done'))) {
       const ok = await U.modal({ title: '連絡済みにする', body: '<p>この候補者への連絡文は、まだ承認されていません。このツールからは連絡を送信しません。承認された文面で、担当者が手動で連絡しましたか？</p>', check: '担当者が内容と宛先を確認して手動で連絡したことを確認しました', confirmLabel: '連絡済みにする' });
@@ -117,8 +120,8 @@
       if (!ok) return false;
     }
     l.status = to;
-    l.statusHistory.push({ at: Date.now(), user: S.user(), from, to, note: note || '' });
-    S.log('起用状況を変更しました', { type: 'influencer', id: cand.id, label: candLabel(cand) }, 'キャンペーン「' + camp.title + '」：' + from + ' → ' + to + (note ? '（' + note + '）' : ''));
+    l.statusHistory.push({ at: Date.now(), user: auto ? '自動選定' : S.user(), from, to, note: note || '' });
+    S.log(auto ? '起用状況を自動選定で変更しました' : '起用状況を変更しました', { type: 'influencer', id: cand.id, label: candLabel(cand) }, 'キャンペーン「' + camp.title + '」：' + from + ' → ' + to + (note ? '（' + note + '）' : ''));
     S.save(true);
     return true;
   }

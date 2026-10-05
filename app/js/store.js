@@ -108,6 +108,7 @@
   function exportJson() {
     const copy = JSON.parse(JSON.stringify(state));
     if (copy.settings && copy.settings.ai) copy.settings.ai.apiKey = ''; // APIキーは書き出さない
+    if (copy.inf && copy.inf.auto) { copy.inf.auto.youtubeKey = ''; copy.inf.auto.igToken = ''; }
     return JSON.stringify(copy, null, 2);
   }
 
@@ -115,9 +116,11 @@
     const data = JSON.parse(text);
     if (!data || !Array.isArray(data.stores) || !Array.isArray(data.reports) || !Array.isArray(data.minutes)) throw new Error('Four Seasons 業務アシストのバックアップ形式ではありません');
     const key = state && state.settings && state.settings.ai ? state.settings.ai.apiKey : '';
+    const autoKeys = state && state.inf && state.inf.auto ? { youtubeKey: state.inf.auto.youtubeKey, igToken: state.inf.auto.igToken } : null;
     state = migrate(data);
     state.settings.ai = state.settings.ai || { enabled: false, apiKey: '' };
     if (!state.settings.ai.apiKey) state.settings.ai.apiKey = key;
+    if (autoKeys && state.inf) { state.inf.auto = state.inf.auto || {}; if (!state.inf.auto.youtubeKey) state.inf.auto.youtubeKey = autoKeys.youtubeKey; if (!state.inf.auto.igToken) state.inf.auto.igToken = autoKeys.igToken; }
     save(true);
   }
 

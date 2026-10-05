@@ -142,6 +142,7 @@
       '<div class="panel"><h2>基本情報</h2>' +
       '<div class="field"><label>プロフィールURL（必須）</label><input type="text" id="url" value="' + esc(c.profileUrl) + '" placeholder="https://www.instagram.com/xxxx/"></div>' +
       '<div class="row"><div class="field"><label>表示名</label><input type="text" id="dn" value="' + esc(c.displayName) + '"></div><div class="field"><label>アカウント名</label><input type="text" id="hd" value="' + esc(c.handle) + '"></div><div class="field" style="flex:0 1 140px"><label>SNS</label><select id="pf">' + Object.keys(I.PLATFORMS).map((k) => '<option value="' + k + '"' + (c.platform === k ? ' selected' : '') + '>' + I.PLATFORMS[k] + '</option>').join('') + '</select></div></div>' +
+      (c.auto ? '<div class="alert info small"><b>自動判定（' + esc(c.auto.platformSource) + '・' + esc(c.auto.analyzedAt) + '）</b>' + (c.auto.regionEvidence.length ? '<br>地域の根拠：' + c.auto.regionEvidence.map(esc).join('／') : '<br>地域：公開情報に店舗エリアの記載なし') + (c.auto.genreEvidence.length ? '<br>ジャンルの根拠：' + c.auto.genreEvidence.map(esc).join('／') : '') + (c.auto.foodRatio !== undefined ? '<br>グルメ関連の投稿の割合（目安）：' + c.auto.foodRatio + '%' : '') + '</div>' : '') +
       '<div class="field"><label>主な活動地域（市区町村・駅名など。区切りは「、」）</label><input type="text" id="ar" value="' + esc(I.toList(c.areas).join('、')) + '"></div>' +
       '<div class="field"><label>発信ジャンル</label><input type="text" id="gn" value="' + esc(I.toList(c.genres).join('、')) + '" placeholder="例：スイーツ、カフェ、ラーメン"></div>' +
       '<div class="field"><label>よく使うハッシュタグ</label><input type="text" id="ht" value="' + esc(I.toList(c.hashtags).join('、')) + '" placeholder="例：高松スイーツ、香川カフェ"></div>' +
@@ -249,6 +250,8 @@
         await U.modal({ title: '保存できません', body: '<ul class="checks">' + errors.map((e) => '<li>' + esc(e) + '</li>').join('') + '</ul>', confirmLabel: 'OK', hideCancel: true });
         return;
       }
+      if (!isNew && JSON.stringify(c.areas || []) !== JSON.stringify(next.areas)) c.areasManual = true; // 手入力した地域・ジャンルは自動選定で上書きしない
+      if (!isNew && JSON.stringify(c.genres || []) !== JSON.stringify(next.genres)) c.genresManual = true;
       Object.assign(c, next, facts, { quality, contact, source, notes, updatedAt: Date.now() });
       if (isNew) st.candidates.push(c);
       if (isNew || changes.length) X.pushHistory(c, isNew ? ['新規登録：' + source.type + ' ' + source.detail].concat(changes) : changes, isNew ? '候補者を登録しました' : '候補者情報を更新しました');
