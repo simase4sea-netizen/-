@@ -32,7 +32,13 @@
       minutes: [],
       audit: [],
       inf: emptyInf(),
+      bill: emptyBill(),
     };
+  }
+
+  // 請求管理のデータ
+  function emptyBill() {
+    return { clients: [], contracts: [], invoices: [], payments: [], reminders: [], settings: root.FS.bill.defaultSettings() };
   }
 
   // インフルエンサー候補選定のデータ（既存データに無ければ追加する）
@@ -45,6 +51,11 @@
     const d = root.FS.inf.defaultSettings();
     st.inf.settings = Object.assign({}, d, st.inf.settings || {});
     st.inf.settings.weights = Object.assign({}, d.weights, (st.inf.settings || {}).weights || {});
+    if (!st.bill) st.bill = emptyBill();
+    ['clients', 'contracts', 'invoices', 'payments', 'reminders'].forEach((k) => { if (!Array.isArray(st.bill[k])) st.bill[k] = []; });
+    const bd = root.FS.bill.defaultSettings();
+    st.bill.settings = Object.assign({}, bd, st.bill.settings || {});
+    st.bill.settings.issuer = Object.assign({}, bd.issuer, st.bill.settings.issuer || {});
     return st;
   }
 

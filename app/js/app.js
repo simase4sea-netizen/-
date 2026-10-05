@@ -22,6 +22,18 @@
     [/^#\/inf\/cand\/([\w]+)$/, 'infcands', (m, a) => V.infCandidate(m, a[1])],
     [/^#\/inf\/link\/([\w]+)$/, 'inf', (m, a) => V.infLink(m, a[1])],
     [/^#\/inf\/settings$/, 'infsettings', (m) => V.infSettings(m)],
+    [/^#\/bill$/, 'bill', (m) => V.billHome(m)],
+    [/^#\/bill\/clients$/, 'billclients', (m) => V.billClients(m)],
+    [/^#\/bill\/client\/([\w]+)$/, 'billclients', (m, a) => V.billClient(m, a[1])],
+    [/^#\/bill\/contracts$/, 'billcontracts', (m) => V.billContracts(m)],
+    [/^#\/bill\/contract\/([\w]+)$/, 'billcontracts', (m, a, p) => V.billContract(m, a[1], p)],
+    [/^#\/bill\/invoices$/, 'billinvoices', (m) => V.billInvoices(m)],
+    [/^#\/bill\/inv\/([\w]+)$/, 'billinvoices', (m, a) => V.billInvoice(m, a[1])],
+    [/^#\/bill\/bulk$/, 'billinvoices', (m) => V.billBulk(m)],
+    [/^#\/bill\/print\/([\w]+)$/, 'billinvoices', (m, a) => V.billPrint(m, a[1])],
+    [/^#\/bill\/payments$/, 'billpayments', (m) => V.billPayments(m)],
+    [/^#\/bill\/remind\/([\w]+)$/, 'billpayments', (m, a) => V.billReminder(m, a[1])],
+    [/^#\/bill\/settings$/, 'billsettings', (m) => V.billSettings(m)],
   ];
 
   function route() {
