@@ -16,6 +16,12 @@
     [/^#\/log$/, 'log', (m) => V.auditLog(m)],
     [/^#\/settings$/, 'settings', (m) => V.settings(m)],
     [/^#\/guide$/, 'guide', (m) => V.guide(m)],
+    [/^#\/inf$/, 'inf', (m) => V.infList(m)],
+    [/^#\/inf\/c\/([\w]+)$/, 'inf', (m, a, p) => V.infCampaign(m, a[1], p)],
+    [/^#\/inf\/cands$/, 'infcands', (m) => V.infCandidates(m)],
+    [/^#\/inf\/cand\/([\w]+)$/, 'infcands', (m, a) => V.infCandidate(m, a[1])],
+    [/^#\/inf\/link\/([\w]+)$/, 'inf', (m, a) => V.infLink(m, a[1])],
+    [/^#\/inf\/settings$/, 'infsettings', (m) => V.infSettings(m)],
   ];
 
   function route() {

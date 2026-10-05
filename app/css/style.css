@@ -218,3 +218,4 @@ table.tbl { width: 100%; border-collapse: collapse; }
   .sticky-actions { position: static; }
   .sticky-actions .grow { flex: 1 1 100%; order: -1; }
 }
+select[data-status] { min-width: 120px; }

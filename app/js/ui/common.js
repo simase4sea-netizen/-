@@ -195,7 +195,7 @@
       const store = opts.getStore();
       const checks = opts.getChecks();
       const target = { type: opts.type, id: doc.id, label: opts.getLabel() };
-      const storeLine = store
+      const storeLine = opts.targetHtml ? opts.targetHtml() : store
         ? '<div class="confirm-target ' + (store.kind === 'own' ? 'badge own' : 'badge client') + '" style="display:block">' + esc(store.name) + '（' + G.kindLabel(store.kind) + '）</div>'
         : '<div class="alert danger">店舗・案件が選択されていません。</div>';
 
@@ -232,9 +232,9 @@
         const text = opts.getText();
         const ok = await modal({
           title: '送信用にコピー',
-          body: '<p>次の宛先に送る文面をクリップボードにコピーします。このアプリから外部へは送信しません。LINE・メール等に貼り付けて、宛先を確認してから送信してください。</p>' + storeLine +
+          body: '<p>次の宛先に送る文面をクリップボードにコピーします。このアプリから外部へは送信しません。' + (opts.copyHint || 'LINE・メール等に貼り付けて、宛先を確認してから送信してください。') + '</p>' + storeLine +
             '<div class="pre" style="max-height:240px;overflow:auto">' + esc(text) + '</div>',
-          check: '宛先の店舗と文面の店舗名が一致していることを確認しました',
+          check: opts.copyCheck || '宛先の店舗と文面の店舗名が一致していることを確認しました',
           confirmLabel: 'コピーする',
         });
         if (!ok) return;
@@ -244,7 +244,7 @@
       } else if (kind === 'done') {
         const res = await modal({
           title: '送信済み・完了にする',
-          body: '<p>店舗への送信が済んだことを記録します（このアプリからは送信しません）。</p>' + storeLine +
+          body: '<p>' + esc(opts.doneText || '店舗への送信が済んだことを記録します（このアプリからは送信しません）。') + '</p>' + storeLine +
             '<div class="field"><label>送信方法・メモ（任意）</label><input type="text" id="mdl-memo" placeholder="例：LINEで店長へ送信"></div>',
           check: '承認済みの内容を、正しい宛先へ送信したことを確認しました',
           confirmLabel: '完了にする',

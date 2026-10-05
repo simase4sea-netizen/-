@@ -31,7 +31,21 @@
       reports: [],
       minutes: [],
       audit: [],
+      inf: emptyInf(),
     };
+  }
+
+  // インフルエンサー候補選定のデータ（既存データに無ければ追加する）
+  function emptyInf() {
+    return { campaigns: [], candidates: [], links: [], searches: [], settings: root.FS.inf.defaultSettings() };
+  }
+  function migrate(st) {
+    if (!st.inf) st.inf = emptyInf();
+    ['campaigns', 'candidates', 'links', 'searches'].forEach((k) => { if (!Array.isArray(st.inf[k])) st.inf[k] = []; });
+    const d = root.FS.inf.defaultSettings();
+    st.inf.settings = Object.assign({}, d, st.inf.settings || {});
+    st.inf.settings.weights = Object.assign({}, d.weights, (st.inf.settings || {}).weights || {});
+    return st;
   }
 
   let state = null;
@@ -40,7 +54,7 @@
   function load() {
     try {
       const raw = root.localStorage.getItem(KEY);
-      state = raw ? JSON.parse(raw) : defaultState();
+      state = migrate(raw ? JSON.parse(raw) : defaultState());
     } catch (e) {
       console.error(e);
       state = defaultState();
@@ -90,7 +104,7 @@
     const data = JSON.parse(text);
     if (!data || !Array.isArray(data.stores) || !Array.isArray(data.reports) || !Array.isArray(data.minutes)) throw new Error('Four Seasons 業務アシストのバックアップ形式ではありません');
     const key = state && state.settings && state.settings.ai ? state.settings.ai.apiKey : '';
-    state = data;
+    state = migrate(data);
     state.settings.ai = state.settings.ai || { enabled: false, apiKey: '' };
     if (!state.settings.ai.apiKey) state.settings.ai.apiKey = key;
     save(true);

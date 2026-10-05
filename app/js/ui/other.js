@@ -208,12 +208,12 @@
     const st = S.get();
     const q = sessionStorage.getItem('log-q') || '';
     const rows = st.audit.slice().reverse().filter((e) => !q || [e.user, e.action, e.targetLabel, e.detail].join(' ').includes(q)).slice(0, 500);
-    const typeLabel = { report: '広告レポート', minutes: '議事録', store: '店舗', project: '案件', settings: '設定', tasks: 'タスク', data: 'データ' };
+    const typeLabel = { report: '広告レポート', minutes: '議事録', store: '店舗', project: '案件', settings: '設定', tasks: 'タスク', data: 'データ', campaign: 'インフルエンサー起用', influencer: 'インフルエンサー候補' };
     main.innerHTML = '<h1>操作履歴</h1><p class="lead">誰が・いつ・何を作成・編集・承認したかを記録しています（新しい順、最大500件表示）。</p>' +
       '<div class="row" style="margin-bottom:10px"><div class="field"><label>検索（利用者・操作・対象）</label><input type="search" id="q" value="' + esc(q) + '"></div></div>' +
       (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>日時</th><th>利用者</th><th>対象</th><th>操作</th><th>詳細</th></tr></thead><tbody>' +
         rows.map((e) => {
-          const href = e.targetType === 'report' ? '#/report/' + e.targetId : e.targetType === 'minutes' ? '#/minutes/' + e.targetId : '';
+          const href = e.targetType === 'report' ? '#/report/' + e.targetId : e.targetType === 'minutes' ? '#/minutes/' + e.targetId : e.targetType === 'campaign' ? '#/inf/c/' + e.targetId : e.targetType === 'influencer' && /^cand_/.test(e.targetId || '') ? '#/inf/cand/' + e.targetId : '';
           return '<tr><td class="nowrap small">' + F.fmtDateTime(e.at) + '</td><td class="nowrap">' + esc(e.user) + '</td><td class="small">' + esc(typeLabel[e.targetType] || '') + '<br>' + (href ? '<a href="' + href + '">' + esc(e.targetLabel || '') + '</a>' : esc(e.targetLabel || '')) + '</td><td>' + esc(e.action) + '</td><td class="small muted">' + esc(e.detail) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">履歴はありません。</div>');
     U.$('#q', main).addEventListener('input', (e) => { sessionStorage.setItem('log-q', e.target.value); auditLog(main); const v = U.$('#q', main); v.focus(); v.setSelectionRange(v.value.length, v.value.length); });
