@@ -1,0 +1,9 @@
+{
+  "name": "four-seasons-gyomu-assist",
+  "private": true,
+  "description": "合同会社Four Seasons 業務アシスト（広告レポート・議事録タスク整理）",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:ui": "node tests/ui-smoke.js"
+  }
+}

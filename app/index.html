@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Four Seasons 業務アシスト</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand">Four Seasons 業務アシスト<small>合同会社Four Seasons</small></div>
+    <ul class="nav">
+      <li><a href="#/home" data-nav="home">ホーム</a></li>
+      <li class="sep">作成</li>
+      <li><a href="#/reports" data-nav="reports">広告レポート</a></li>
+      <li><a href="#/minutes" data-nav="minutes">議事録・タスク整理</a></li>
+      <li><a href="#/tasks" data-nav="tasks">タスク一覧</a></li>
+      <li class="sep">管理</li>
+      <li><a href="#/stores" data-nav="stores">店舗・案件</a></li>
+      <li><a href="#/log" data-nav="log">操作履歴</a></li>
+      <li><a href="#/settings" data-nav="settings">設定</a></li>
+      <li><a href="#/guide" data-nav="guide">使い方・仕様</a></li>
+      <li class="sep">今後追加予定</li>
+      <li class="soon">SNS投稿・LINE配信文</li>
+      <li class="soon">案件・撮影・投稿の進行管理</li>
+      <li class="soon">Googleマップ投稿・口コミ返信</li>
+      <li class="soon">店舗運営文書</li>
+    </ul>
+    <div class="userbox">利用者（操作履歴に記録）<select id="userSel" aria-label="利用者"></select></div>
+  </aside>
+  <main class="main"><div class="main-inner" id="main"></div></main>
+</div>
+<div id="toast"></div>
+<script src="js/core/format.js"></script>
+<script src="js/core/calc.js"></script>
+<script src="js/core/csv.js"></script>
+<script src="js/core/guard.js"></script>
+<script src="js/core/report.js"></script>
+<script src="js/core/minutes.js"></script>
+<script src="js/store.js"></script>
+<script src="js/files.js"></script>
+<script src="js/ui/common.js"></script>
+<script src="js/ui/report.js"></script>
+<script src="js/ui/minutes.js"></script>
+<script src="js/ui/other.js"></script>
+<script src="js/ui/guide.js"></script>
+<script src="js/sample.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
