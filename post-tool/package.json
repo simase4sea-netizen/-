@@ -1,0 +1,23 @@
+{
+  "name": "four-seasons-google-post-tool",
+  "version": "0.1.0",
+  "private": true,
+  "description": "店舗情報管理付き Google投稿コンテンツ生成ツール（合同会社Four Seasons向け）",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "seed": "node --disable-warning=ExperimentalWarning scripts/seed.js",
+    "backup": "node --disable-warning=ExperimentalWarning scripts/backup.js",
+    "test": "node --disable-warning=ExperimentalWarning --test 'test/**/*.test.js'",
+    "test:e2e": "node --disable-warning=ExperimentalWarning test/e2e/ui.e2e.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
+  }
+}

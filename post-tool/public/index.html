@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google投稿コンテンツ生成ツール</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Google投稿コンテンツ生成ツール <span class="sub">Four Seasons</span></div>
+  <label class="user">担当者名 <input id="userName" placeholder="例：山田" autocomplete="name"></label>
+</header>
+<nav class="tabs" role="tablist">
+  <button data-tab="generate" class="active">投稿作成</button>
+  <button data-tab="posts">投稿案一覧</button>
+  <button data-tab="master">顧客・店舗情報</button>
+  <button data-tab="data">CSV・バックアップ</button>
+  <button data-tab="spec">Google仕様設定</button>
+</nav>
+<div id="notice" class="notice" hidden></div>
+<main>
+  <!-- 投稿作成 -->
+  <section id="tab-generate" class="tab active">
+    <div class="grid2">
+      <div class="panel">
+        <h2>1. 店舗を選ぶ</h2>
+        <p class="hint">複数選ぶと、同じテーマを店舗ごとに一括生成します（同じ顧客の店舗のみ）。</p>
+        <input id="storeSearch" type="search" placeholder="顧客・ブランド・店舗名・店舗ID・地域で検索">
+        <div id="storePicker" class="picker"></div>
+      </div>
+      <div class="panel">
+        <h2>2. 投稿内容を入力</h2>
+        <form id="genForm" class="form">
+          <label>投稿目的<input name="purpose" placeholder="例：秋の新メニューの認知拡大"></label>
+          <label>投稿テーマ<input name="theme" placeholder="例：秋限定メニューのご案内"></label>
+          <label>主役の商品・メニュー<input name="mainItem" placeholder="登録メニュー名と同じにすると価格等を照合します"></label>
+          <label>伝えたい特徴<textarea name="features" rows="2" placeholder="事実として確認できる特徴だけ"></textarea></label>
+          <div class="row3">
+            <label>価格<input name="price" placeholder="例：880円"></label>
+            <label>販売期間<input name="salesPeriod"></label>
+            <label>開催日<input name="eventDate"></label>
+          </div>
+          <div class="row3">
+            <label>希望するCTA<select name="cta" id="ctaSelect"><option value="">なし</option></select></label>
+            <label>CTAのURL（任意）<input name="ctaUrl" placeholder="未入力なら店舗登録のURL"></label>
+            <label>希望する文章トーン<input name="tone" placeholder="未入力なら店舗→ブランドの設定"></label>
+          </div>
+          <div class="row3">
+            <label>投稿予定日<input name="postDate" type="date"></label>
+            <label class="check"><input name="useSeason" type="checkbox" checked> 季節表現を使う</label>
+            <fieldset class="inline"><legend>案の数</legend>
+              <label class="check"><input type="radio" name="setCount" value="1" checked> 1案（おすすめ）</label>
+              <label class="check"><input type="radio" name="setCount" value="3"> 3案</label>
+            </fieldset>
+          </div>
+          <label>使用する画像（任意・AIが内容を確認して描写に使います）<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
+          <div id="perStore"></div>
+          <div class="row3">
+            <label>生成方法<select name="provider" id="providerSelect"></select></label>
+          </div>
+          <div class="actions"><button type="submit" class="primary">確認して生成</button></div>
+        </form>
+      </div>
+    </div>
+    <div id="preflight"></div>
+    <div id="genResults"></div>
+  </section>
+
+  <!-- 投稿案一覧 -->
+  <section id="tab-posts" class="tab">
+    <div class="panel">
+      <form id="postFilter" class="filters">
+        <input name="q" type="search" placeholder="キャッチコピー・本文・店舗名">
+        <select name="store_id" id="postStoreFilter"><option value="">すべての店舗</option></select>
+        <input name="theme" placeholder="テーマ">
+        <select name="status" id="statusFilter"><option value="">すべての状態</option></select>
+        <label>作成日<input name="from" type="date"></label>〜<input name="to" type="date">
+        <button type="submit">検索</button>
+        <a id="exportPosts" class="button" href="/api/export/post_sets.csv">CSV出力</a>
+      </form>
+    </div>
+    <div id="postList"></div>
+  </section>
+
+  <!-- 顧客・店舗情報 -->
+  <section id="tab-master" class="tab">
+    <div class="grid-master">
+      <div class="panel">
+        <input id="masterSearch" type="search" placeholder="検索">
+        <div class="actions"><button id="newClient">＋ 顧客</button></div>
+        <div id="tree" class="tree"></div>
+      </div>
+      <div class="panel" id="editor"><p class="hint">左の一覧から顧客・ブランド・店舗を選ぶか、新規登録してください。</p></div>
+    </div>
+  </section>
+
+  <!-- CSV・バックアップ -->
+  <section id="tab-data" class="tab">
+    <div class="panel">
+      <h2>CSV出力</h2>
+      <p class="hint">Excel で開ける UTF-8（BOM付き）CSV です。</p>
+      <div class="actions">
+        <a class="button" href="/api/export/clients.csv">顧客</a>
+        <a class="button" href="/api/export/brands.csv">ブランド</a>
+        <a class="button" href="/api/export/stores.csv">店舗</a>
+        <a class="button" href="/api/export/menu_items.csv">メニュー・商品</a>
+        <a class="button" href="/api/export/post_sets.csv">投稿案</a>
+      </div>
+      <h2>CSV一括登録</h2>
+      <p class="hint">出力したCSVと同じ列で取り込みます。<b>id が空欄の行は新規登録、id がある行は更新</b>します。1行でもエラーがあれば全件取り消します。登録順は 顧客 → ブランド → 店舗 → メニュー です。</p>
+      <form id="importForm" class="form">
+        <div class="row3">
+          <label>対象<select name="entity"><option value="clients">顧客</option><option value="brands">ブランド</option><option value="stores">店舗</option><option value="menu_items">メニュー・商品</option></select></label>
+          <label>CSVファイル<input name="file" type="file" accept=".csv,text/csv" required></label>
+        </div>
+        <div class="actions"><button type="submit" class="primary">取り込む</button></div>
+      </form>
+      <pre id="importResult" class="result" hidden></pre>
+      <h2>バックアップ</h2>
+      <p class="hint">全データ（変更履歴を含む）を JSON で保存します。サーバー側では <code>npm run backup</code> でデータベースファイルを日時付きで複製できます。</p>
+      <div class="actions"><a class="button" href="/api/backup">バックアップ（JSON）をダウンロード</a></div>
+    </div>
+  </section>
+
+  <!-- Google仕様設定 -->
+  <section id="tab-spec" class="tab">
+    <div class="panel" id="specPanel"></div>
+  </section>
+</main>
+<template id="postTpl">
+  <article class="post">
+    <header class="post-head">
+      <div><span class="store"></span> <span class="setno"></span> <span class="meta"></span></div>
+      <label class="status">状態 <select class="statusSel"></select></label>
+    </header>
+    <div class="post-body">
+      <label class="lbl">画像用キャッチコピー：<textarea class="f-copy" rows="2"></textarea></label>
+      <div class="copyrow"><button type="button" data-copy="copy">キャッチコピーをコピー</button><span class="cnt c-copy"></span></div>
+      <label class="lbl">日本語投稿文：<textarea class="f-ja" rows="14"></textarea></label>
+      <div class="copyrow"><button type="button" data-copy="ja">日本語投稿文をコピー</button><span class="cnt c-ja"></span></div>
+      <div class="sep">ーーーーーー</div>
+      <label class="lbl">English:<textarea class="f-en" rows="8"></textarea></label>
+      <div class="copyrow"><button type="button" data-copy="en">英語投稿文をコピー</button><span class="cnt c-en"></span></div>
+      <div class="actions">
+        <button type="button" data-copy="set" class="primary">1セットまとめてコピー</button>
+        <button type="button" class="save">保存</button>
+        <button type="button" class="dup">複製</button>
+        <button type="button" class="hist">履歴</button>
+      </div>
+    </div>
+    <details class="review">
+      <summary>担当者向け確認（投稿文には含まれません）<span class="badge"></span></summary>
+      <div class="review-body"></div>
+    </details>
+  </article>
+</template>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

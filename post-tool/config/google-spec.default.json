@@ -1,0 +1,52 @@
+{
+  "_comment": "Googleビジネスプロフィール投稿の仕様値。値はコードに固定せず、このファイル（または画面の「Google仕様設定」）で更新する。画面で保存した値は data/google-spec.json に記録され、こちらより優先される。",
+  "specVersion": "2026-10-05",
+  "verifiedAt": "2026-10-05",
+  "verifiedBy": "初期設定（開発時調査）",
+  "verificationNote": "開発環境から support.google.com / developers.google.com へ直接アクセスできなかったため、公式ヘルプを引用した二次情報で確認した値です。運用開始前に公式ページで再確認し、確認日を更新してください。",
+  "needsReverification": true,
+  "sources": [
+    { "label": "ビジネス プロフィールの投稿を作成、管理する（Google ビジネス プロフィール ヘルプ）", "url": "https://support.google.com/business/answer/7342169?hl=ja" },
+    { "label": "ビジネス プロフィールの写真、動画、投稿に関するコンテンツ ポリシー", "url": "https://support.google.com/business/answer/7213077?hl=ja" },
+    { "label": "Business Profile APIs: accounts.locations.localPosts", "url": "https://developers.google.com/my-business/reference/rest/v4/accounts.locations.localPosts" }
+  ],
+  "postBody": {
+    "maxChars": 1500,
+    "status": "二次情報で確認（最新情報・イベント・特典の本文共通で1,500文字）",
+    "countMethod": "codepoints"
+  },
+  "eventTitle": { "maxChars": 58, "status": "二次情報で確認" },
+  "writingGuide": {
+    "jaRecommendedMin": 700,
+    "jaRecommendedMax": 1000,
+    "enRecommendedMax": 1500,
+    "catchcopyMaxChars": 24,
+    "status": "社内ルール（Google仕様ではありません）"
+  },
+  "ctaTypes": [
+    { "code": "BOOK", "ja": "予約", "en": "Book", "needsUrl": true },
+    { "code": "ORDER", "ja": "オンライン注文", "en": "Order online", "needsUrl": true },
+    { "code": "SHOP", "ja": "購入", "en": "Buy", "needsUrl": true },
+    { "code": "LEARN_MORE", "ja": "詳細", "en": "Learn more", "needsUrl": true },
+    { "code": "SIGN_UP", "ja": "登録", "en": "Sign up", "needsUrl": true },
+    { "code": "CALL", "ja": "今すぐ電話", "en": "Call now", "needsUrl": false }
+  ],
+  "image": {
+    "formats": ["JPG", "PNG"],
+    "minBytes": 10240,
+    "maxBytes": 5242880,
+    "minWidth": 400,
+    "minHeight": 300,
+    "status": "二次情報（要再確認）"
+  },
+  "policyChecks": {
+    "phoneNumberInBody": {
+      "enabled": true,
+      "message": "本文中の電話番号は、未確認の連絡先として投稿が削除・拒否される場合があります。「今すぐ電話」ボタンの利用を検討してください。"
+    },
+    "unregisteredUrl": {
+      "enabled": true,
+      "message": "店舗に登録されていないURLが本文に含まれています。"
+    }
+  }
+}
