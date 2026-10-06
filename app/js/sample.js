@@ -64,7 +64,48 @@
     m.summary = root.FS.minutes.draftSummary(m);
     st.minutes.push(m);
     S.log('サンプルの議事録を追加しました', { type: 'minutes', id: m.id, label: m.title }, '', m);
+    loadGpost(st, now);
     S.save(true);
+  }
+
+  // Google投稿作成のサンプル（架空のブランド・2店舗・メニュー）。実在の店舗・施設とは関係ありません。
+  function loadGpost(st, now) {
+    const GP = root.FS.gpost;
+    let brand = st.gpost.brands.find((b) => b.name === '【サンプル】バル・ソレイユ');
+    if (!brand) {
+      brand = Object.assign(GP.emptyBrand(), {
+        id: S.uid('brand'), name: '【サンプル】バル・ソレイユ', industry: 'スペイン料理', features: '鉄板で仕上げるパエリアと、タパスを気軽に楽しめるスペインバル',
+        tone: '明るく親しみやすい', preferredPhrases: 'タパス、シェアして楽しむ', avoidPhrases: '激安\n日本一', referencePosts: '', notes: '価格は税込表記', createdAt: now, updatedAt: now, history: [],
+      });
+      st.gpost.brands.push(brand);
+    }
+    const mk = (name, info, menu) => {
+      let s = st.stores.find((x) => x.name === name);
+      if (!s) { s = { id: S.uid('store'), name, kind: 'client', aliases: [], memo: '動作確認用のサンプル店舗です（実在しません）', reportTemplate: '', createdAt: now }; st.stores.push(s); }
+      s.gpost = Object.assign(GP.emptyStoreInfo(), info, { brandId: brand.id, menu: menu.map((m) => Object.assign({ id: S.uid('menu'), createdAt: now }, m)) });
+      return s;
+    };
+    mk('【サンプル】バル・ソレイユ 新浦安店', {
+      area: '新浦安', address: '千葉県浦安市テスト町1-1 テストモール新浦安 3階', mapsUrl: 'https://maps.example.com/soleil-shinurayasu', access: 'JR新浦安駅から徒歩5分', floorInfo: 'テストモール新浦安 3階',
+      hours: '11:00〜22:00（L.O. 21:00）', holidays: '施設の休館日に準ずる', reserveMethod: 'Web予約', reserveUrl: 'https://reserve.example.com/soleil-shinurayasu',
+      atmosphere: 'テラコッタ調の明るい店内で、ベビーカーでも入りやすい広めの通路', scenes: 'お買い物途中のランチ、家族での食事、友人との女子会', target: 'ファミリー、近隣の買い物客',
+      features: 'ランチタイムはパエリアのハーフサイズを用意', facilities: 'キッズチェアあり',
+      ctaOptions: [{ type: 'BOOK', url: 'https://reserve.example.com/soleil-shinurayasu' }, { type: 'LEARN_MORE', url: 'https://soleil.example.com/shinurayasu' }],
+      verifiedAt: '2026-09-20', verifiedSource: '店長へのヒアリング（サンプル）', verifiedBy: '嶋野成優',
+    }, [
+      { name: '魚介のパエリア', description: 'エビやムール貝をたっぷり使い、鉄鍋で炊き上げるパエリア', price: '1,980円', period: '通年' },
+      { name: '秋のきのこアヒージョ', description: '数種類のきのこをオリーブオイルとにんにくで煮込んだアヒージョ', price: '880円', period: '2026年9月1日〜11月30日' },
+    ]);
+    mk('【サンプル】バル・ソレイユ 海浜幕張店', {
+      area: '海浜幕張', address: '千葉県千葉市美浜区テスト2-2 テストプラザ幕張 1階', access: 'JR海浜幕張駅南口から徒歩3分', floorInfo: 'テストプラザ幕張 1階',
+      hours: '17:00〜23:00', holidays: '月曜日', reserveMethod: '電話またはWeb予約', reserveUrl: 'https://reserve.example.com/soleil-makuhari',
+      atmosphere: 'カウンター中心の落ち着いたバル空間', scenes: '仕事帰りの一杯、少人数での飲み会',
+      ctaOptions: [{ type: 'BOOK', url: 'https://reserve.example.com/soleil-makuhari' }],
+      verifiedAt: '2026-04-01', verifiedSource: '公式サイト（サンプル）', verifiedBy: '嶋野成優',
+    }, [
+      { name: 'イベリコ豚の鉄板焼き', description: '香ばしく焼き上げたイベリコ豚', price: '2,480円', period: '通年' },
+    ]);
+    S.log('サンプルのGoogle投稿用の店舗情報を追加しました', { type: 'gstore', id: '', label: '【サンプル】バル・ソレイユ' }, '2店舗');
   }
 
   root.FS = root.FS || {};

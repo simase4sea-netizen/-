@@ -1,9 +1,9 @@
 {
   "name": "four-seasons-gyomu-assist",
   "private": true,
-  "description": "合同会社Four Seasons 業務アシスト（広告レポート・議事録タスク整理・インフルエンサー候補選定・請求管理）",
+  "description": "合同会社Four Seasons 業務アシスト（広告レポート・議事録タスク整理・インフルエンサー候補選定・請求管理・Google投稿作成）",
   "scripts": {
     "test": "node --test tests/*.test.js",
-    "test:ui": "node tests/ui-smoke.js && node tests/ui-influencer.js && node tests/ui-inf-auto.js && node tests/ui-inf-bulk.js && node tests/ui-billing.js"
+    "test:ui": "node tests/ui-smoke.js && node tests/ui-influencer.js && node tests/ui-inf-auto.js && node tests/ui-inf-bulk.js && node tests/ui-billing.js && node tests/ui-gpost.js"
   }
 }

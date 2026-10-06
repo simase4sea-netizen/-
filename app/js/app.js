@@ -34,6 +34,13 @@
     [/^#\/bill\/payments$/, 'billpayments', (m) => V.billPayments(m)],
     [/^#\/bill\/remind\/([\w]+)$/, 'billpayments', (m, a) => V.billReminder(m, a[1])],
     [/^#\/bill\/settings$/, 'billsettings', (m) => V.billSettings(m)],
+    [/^#\/gpost$/, 'gpost', (m) => V.gpostCreate(m)],
+    [/^#\/gpost\/list$/, 'gpostlist', (m) => V.gpostList(m)],
+    [/^#\/gpost\/p\/([\w]+)$/, 'gpostlist', (m, a) => V.gpostPost(m, a[1])],
+    [/^#\/gpost\/stores$/, 'gpoststores', (m) => V.gpostStores(m)],
+    [/^#\/gpost\/store\/([\w]+)$/, 'gpoststores', (m, a) => V.gpostStore(m, a[1])],
+    [/^#\/gpost\/brand\/([\w]+)$/, 'gpoststores', (m, a) => V.gpostBrand(m, a[1])],
+    [/^#\/gpost\/spec$/, 'gpostspec', (m) => V.gpostSpec(m)],
   ];
 
   function route() {

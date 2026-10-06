@@ -252,3 +252,18 @@ select[data-status] { min-width: 120px; }
   .inv-doc { border: 0; padding: 0; max-width: none; }
   .inv-doc .inv-draft { display: block !important; }
 }
+
+/* Google投稿作成 */
+.gp-stores { display: grid; gap: 6px; max-height: 320px; overflow-y: auto; }
+.gp-store { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; }
+.gp-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; background: #fff; }
+.gp-card textarea { width: 100%; }
+.gp-card textarea[readonly] { background: #fbfaf8; }
+.gp-head { margin-bottom: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gp-sep { margin: 10px 0 6px; color: var(--muted); letter-spacing: 2px; }
+.gp-review { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 8px; background: #fbfaf8; border-radius: 8px; padding: 10px 12px; }
+.gp-review summary { cursor: pointer; }
+.gp-review th { width: 170px; text-align: left; vertical-align: top; }
+.gp-checks { list-style: none; padding: 0; margin: 0; font-size: 12.5px; }
+.gp-checks li { padding: 3px 0; }
+.badge.ok { background: var(--own-soft); color: var(--own); border-color: #b9dccb; }

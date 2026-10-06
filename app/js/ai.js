@@ -161,6 +161,24 @@
     };
   }
 
+  // Google投稿：1店舗分の事実シート（ctx）だけを送り、キャッチコピー・日本語・英語のセットを構造化出力で受け取る。
+  // 画像は送信時だけ使い、保存しない。呼び出し側で送信前の確認画面を必ず通す。
+  async function generateGooglePosts(ctx, images) {
+    const GP = root.FS.gpost;
+    const blocks = [];
+    (images || []).forEach((img) => {
+      const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,(.+)$/.exec(img.dataUrl || '');
+      if (m) blocks.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+    });
+    const text = await call({
+      thinking: { type: 'adaptive' },
+      output_config: { effort: 'high', format: { type: 'json_schema', schema: GP.OUTPUT_SCHEMA } },
+      system: GP.buildSystemPrompt(ctx),
+      messages: [{ role: 'user', content: blocks.concat([{ type: 'text', text: GP.buildUserPrompt(ctx) }]) }],
+    });
+    return GP.normalizeSets(JSON.parse(text), ctx.setCount);
+  }
+
   root.FS = root.FS || {};
-  root.FS.ai = { ping, readAdMetricsFromImage, extractMinutes, MODEL };
+  root.FS.ai = { ping, readAdMetricsFromImage, extractMinutes, generateGooglePosts, MODEL };
 })(self);

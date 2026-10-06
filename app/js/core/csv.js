@@ -147,7 +147,11 @@
     return { metrics, period, warnings };
   }
 
-  const api = { parse, autoMap, aggregate, isTotalRow, COLUMN_SYNONYMS };
+  // 2次元配列をCSV文字列にする（Excelで開けるよう UTF-8 BOM・CRLF）
+  function cell(v) { return '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"'; }
+  function stringify(head, rows) { return '\ufeff' + [head].concat(rows).map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n'; }
+
+  const api = { parse, stringify, autoMap, aggregate, isTotalRow, COLUMN_SYNONYMS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.FS = root.FS || {}; root.FS.csv = api; }
 })(typeof self !== 'undefined' ? self : this);

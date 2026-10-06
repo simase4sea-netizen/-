@@ -20,6 +20,11 @@
       <li><a href="#/inf" data-nav="inf">候補選定・起用管理</a></li>
       <li><a href="#/inf/cands" data-nav="infcands">候補者データベース</a></li>
       <li><a href="#/inf/settings" data-nav="infsettings">評価の設定</a></li>
+      <li class="sep">Google投稿</li>
+      <li><a href="#/gpost" data-nav="gpost">Google投稿作成</a></li>
+      <li><a href="#/gpost/list" data-nav="gpostlist">投稿案一覧</a></li>
+      <li><a href="#/gpost/stores" data-nav="gpoststores">店舗情報・ブランド</a></li>
+      <li><a href="#/gpost/spec" data-nav="gpostspec">Google仕様設定</a></li>
       <li class="sep">請求管理</li>
       <li><a href="#/bill" data-nav="bill">請求管理ホーム</a></li>
       <li><a href="#/bill/invoices" data-nav="billinvoices">請求書</a></li>
@@ -35,7 +40,7 @@
       <li class="sep">今後追加予定</li>
       <li class="soon">SNS投稿・LINE配信文</li>
       <li class="soon">案件・撮影・投稿の進行管理</li>
-      <li class="soon">Googleマップ投稿・口コミ返信</li>
+      <li class="soon">Googleマップ口コミ返信</li>
       <li class="soon">店舗運営文書</li>
     </ul>
     <div class="userbox">利用者（操作履歴に記録）<select id="userSel" aria-label="利用者"></select></div>
@@ -43,6 +48,7 @@
   <main class="main"><div class="main-inner" id="main"></div></main>
 </div>
 <div id="toast"></div>
+<script src="config/google-spec.default.js"></script>
 <script src="js/core/format.js"></script>
 <script src="js/core/calc.js"></script>
 <script src="js/core/csv.js"></script>
@@ -52,6 +58,7 @@
 <script src="js/core/influencer.js"></script>
 <script src="js/core/inf-auto.js"></script>
 <script src="js/core/billing.js"></script>
+<script src="js/core/gpost.js"></script>
 <script src="js/store.js"></script>
 <script src="js/files.js"></script>
 <script src="js/ui/common.js"></script>
@@ -67,6 +74,7 @@
 <script src="js/ui/bill-masters.js"></script>
 <script src="js/ui/bill-invoices.js"></script>
 <script src="js/ui/bill-other.js"></script>
+<script src="js/ui/gpost.js"></script>
 <script src="js/sample.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/app.js"></script>

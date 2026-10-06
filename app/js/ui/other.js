@@ -35,7 +35,8 @@
   // ───────── ホーム ─────────
   function home(main) {
     const st = S.get();
-    const docs = st.reports.map((r) => ({ kind: '広告レポート', label: V.reportLabel(r), href: '#/report/' + r.id, d: r })).concat(st.minutes.map((m) => ({ kind: '議事録', label: V.minutesLabel(m), href: '#/minutes/' + m.id, d: m })));
+    const docs = st.reports.map((r) => ({ kind: '広告レポート', label: V.reportLabel(r), href: '#/report/' + r.id, d: r })).concat(st.minutes.map((m) => ({ kind: '議事録', label: V.minutesLabel(m), href: '#/minutes/' + m.id, d: m })))
+      .concat(((st.gpost || {}).posts || []).map((p) => ({ kind: 'Google投稿', label: V.gpostLabel(p), href: '#/gpost/p/' + p.id, d: p })));
     const waiting = docs.filter((x) => x.d.status === 'review');
     const drafts = docs.filter((x) => x.d.status === 'draft');
     const approved = docs.filter((x) => x.d.status === 'approved');
@@ -86,7 +87,7 @@
         const nMin = st.minutes.filter((m) => m.storeId === s.id).length;
         return '<div class="panel"><div class="row" style="align-items:center"><div style="flex:1"><h2 style="margin:0">' + esc(s.name) + ' ' + U.kindBadge(s.kind) + '</h2>' +
           '<div class="small muted">' + (s.aliases && s.aliases.length ? '別名：' + esc(s.aliases.join('、')) + '　' : '') + 'レポート' + nRep + '件・議事録' + nMin + '件' + (s.reportTemplate ? '・報告文の形式：登録済み' : '') + '</div>' + (s.memo ? '<div class="small">' + esc(s.memo) + '</div>' : '') + '</div>' +
-          '<div class="btns"><button class="btn small" data-edit="' + s.id + '">編集</button><button class="btn small" data-proj="' + s.id + '">＋ 案件</button></div></div>' +
+          '<div class="btns"><button class="btn small" data-edit="' + s.id + '">編集</button><button class="btn small" data-proj="' + s.id + '">＋ 案件</button><a class="btn small" href="#/gpost/store/' + s.id + '">Google投稿用の情報</a></div></div>' +
           (ps.length ? '<table class="tbl" style="margin-top:8px"><thead><tr><th>案件名</th><th>担当者</th><th></th></tr></thead>' + ps.map((p) => '<tr><td>' + esc(p.name) + '</td><td>' + esc(p.assignee || '未設定') + '</td><td class="right"><button class="btn small" data-pedit="' + p.id + '">編集</button></td></tr>').join('') + '</table>' : '') + '</div>';
       }).join('') : '<div class="empty">該当する店舗はありません。</div>');
 
@@ -208,12 +209,12 @@
     const st = S.get();
     const q = sessionStorage.getItem('log-q') || '';
     const rows = st.audit.slice().reverse().filter((e) => !q || [e.user, e.action, e.targetLabel, e.detail].join(' ').includes(q)).slice(0, 500);
-    const typeLabel = { report: '広告レポート', minutes: '議事録', store: '店舗', project: '案件', settings: '設定', tasks: 'タスク', data: 'データ', campaign: 'インフルエンサー起用', influencer: 'インフルエンサー候補', invoice: '請求書', billing: '請求管理' };
+    const typeLabel = { report: '広告レポート', minutes: '議事録', store: '店舗', project: '案件', settings: '設定', tasks: 'タスク', data: 'データ', campaign: 'インフルエンサー起用', influencer: 'インフルエンサー候補', invoice: '請求書', billing: '請求管理', gpost: 'Google投稿', gstore: 'Google投稿の店舗情報', gbrand: 'ブランド共通情報' };
     main.innerHTML = '<h1>操作履歴</h1><p class="lead">誰が・いつ・何を作成・編集・承認したかを記録しています（新しい順、最大500件表示）。</p>' +
       '<div class="row" style="margin-bottom:10px"><div class="field"><label>検索（利用者・操作・対象）</label><input type="search" id="q" value="' + esc(q) + '"></div></div>' +
       (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>日時</th><th>利用者</th><th>対象</th><th>操作</th><th>詳細</th></tr></thead><tbody>' +
         rows.map((e) => {
-          const href = e.targetType === 'report' ? '#/report/' + e.targetId : e.targetType === 'minutes' ? '#/minutes/' + e.targetId : e.targetType === 'invoice' ? '#/bill/inv/' + e.targetId : e.targetType === 'campaign' ? '#/inf/c/' + e.targetId : e.targetType === 'influencer' && /^cand_/.test(e.targetId || '') ? '#/inf/cand/' + e.targetId : '';
+          const href = e.targetType === 'report' ? '#/report/' + e.targetId : e.targetType === 'minutes' ? '#/minutes/' + e.targetId : e.targetType === 'invoice' ? '#/bill/inv/' + e.targetId : e.targetType === 'campaign' ? '#/inf/c/' + e.targetId : e.targetType === 'gpost' && e.targetId ? '#/gpost/p/' + e.targetId : e.targetType === 'gstore' && e.targetId ? '#/gpost/store/' + e.targetId : e.targetType === 'gbrand' && e.targetId ? '#/gpost/brand/' + e.targetId : e.targetType === 'influencer' && /^cand_/.test(e.targetId || '') ? '#/inf/cand/' + e.targetId : '';
           return '<tr><td class="nowrap small">' + F.fmtDateTime(e.at) + '</td><td class="nowrap">' + esc(e.user) + '</td><td class="small">' + esc(typeLabel[e.targetType] || '') + '<br>' + (href ? '<a href="' + href + '">' + esc(e.targetLabel || '') + '</a>' : esc(e.targetLabel || '')) + '</td><td>' + esc(e.action) + '</td><td class="small muted">' + esc(e.detail) + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">履歴はありません。</div>');
     U.$('#q', main).addEventListener('input', (e) => { sessionStorage.setItem('log-q', e.target.value); auditLog(main); const v = U.$('#q', main); v.focus(); v.setSelectionRange(v.value.length, v.value.length); });
@@ -229,7 +230,7 @@
       '<div class="field"><label>報告文の差出人名（{差出人} に入ります）</label><input type="text" id="sender" value="' + esc(s.senderName) + '"></div>' +
       '<button class="btn primary" id="saveUsers">保存</button></div>' +
       '<div class="panel"><h2>AI読み取り・整理（任意）</h2>' +
-      '<p class="small">有効にすると、画像からの数値読み取りと議事録の整理に Claude（Anthropic API）を使えます。<b>使うたびに送信確認が表示され、結果はすべて「要確認」の下書き</b>になります。無効のままでも、手入力・CSV取り込み・ルールでの整理ですべての作業ができます。</p>' +
+      '<p class="small">有効にすると、画像からの数値読み取り・議事録の整理・Google投稿文の生成に Claude（Anthropic API）を使えます。<b>使うたびに送信確認が表示され、結果はすべて「要確認」の下書き</b>になります。無効のままでも、手入力・CSV取り込み・ルールでの整理ですべての作業ができます。</p>' +
       '<div class="alert warn small">APIキーはこのブラウザ内にだけ保存され、バックアップには含まれません。共用パソコンでは使用しないでください。APIの利用料金は Anthropic の契約に基づき発生します。</div>' +
       '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="aiOn"' + (s.ai.enabled ? ' checked' : '') + '> AI読み取り・整理を有効にする</label>' +
       '<div class="field" style="margin-top:8px"><label>Anthropic APIキー</label><input type="password" id="aiKey" value="' + esc(s.ai.apiKey) + '" autocomplete="off" placeholder="sk-ant-..."></div>' +

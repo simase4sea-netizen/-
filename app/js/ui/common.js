@@ -184,8 +184,8 @@
       b.push('<button class="btn" data-wf="back">差し戻す（下書きへ）</button>');
     }
     if (st === 'approved' || st === 'done') {
-      b.push('<button class="btn primary" data-wf="copy">送信用にコピー</button>');
-      if (st === 'approved') b.push('<button class="btn ok" data-wf="done">送信済み・完了にする</button>');
+      if (!opts.hideCopy) b.push('<button class="btn primary" data-wf="copy">送信用にコピー</button>');
+      if (st === 'approved') b.push('<button class="btn ok" data-wf="done">' + esc(opts.doneLabel || '送信済み・完了にする') + '</button>');
       b.push('<button class="btn" data-wf="reopen">修正する（下書きへ戻す）</button>');
     }
     el.innerHTML = statusBadge(st) + ' ' + b.join(' ');
@@ -205,6 +205,7 @@
         S.log('確認待ちにしました', target, '', doc);
       } else if (kind === 'approve') {
         if (opts.requireStore && !store) { toast('店舗・案件が未選択のため承認できません', 'error'); return; }
+        if (opts.beforeApprove && !(await opts.beforeApprove())) return;
         const ok = await modal({
           title: '承認の確認',
           body: '<p>次の対象の内容を承認します。承認後は編集できなくなり、「送信用にコピー」が使えるようになります。</p>' + storeLine +
@@ -246,7 +247,7 @@
           title: '送信済み・完了にする',
           body: '<p>' + esc(opts.doneText || '店舗への送信が済んだことを記録します（このアプリからは送信しません）。') + '</p>' + storeLine +
             '<div class="field"><label>送信方法・メモ（任意）</label><input type="text" id="mdl-memo" placeholder="例：LINEで店長へ送信"></div>',
-          check: '承認済みの内容を、正しい宛先へ送信したことを確認しました',
+          check: opts.doneCheck || '承認済みの内容を、正しい宛先へ送信したことを確認しました',
           confirmLabel: '完了にする',
           collect: (bg) => ({ memo: bg.querySelector('#mdl-memo').value }),
         });

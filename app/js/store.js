@@ -33,8 +33,13 @@
       audit: [],
       inf: emptyInf(),
       bill: emptyBill(),
+      gpost: emptyGpost(),
     };
   }
+
+  // Google投稿作成のデータ（ブランド共通情報・投稿案・Google仕様値）。店舗ごとの情報は stores[].gpost に持つ。
+  function defaultSpec() { return JSON.parse(JSON.stringify(root.FS.GPOST_SPEC_DEFAULT)); }
+  function emptyGpost() { return { brands: [], posts: [], spec: defaultSpec(), specHistory: [] }; }
 
   // 請求管理のデータ
   function emptyBill() {
@@ -56,6 +61,10 @@
     const bd = root.FS.bill.defaultSettings();
     st.bill.settings = Object.assign({}, bd, st.bill.settings || {});
     st.bill.settings.issuer = Object.assign({}, bd.issuer, st.bill.settings.issuer || {});
+    if (!st.gpost) st.gpost = emptyGpost();
+    ['brands', 'posts', 'specHistory'].forEach((k) => { if (!Array.isArray(st.gpost[k])) st.gpost[k] = []; });
+    if (!st.gpost.spec || !st.gpost.spec.postBody) st.gpost.spec = defaultSpec();
+    (st.stores || []).forEach((s) => { if (s.gpost) s.gpost = Object.assign(root.FS.gpost.emptyStoreInfo(), s.gpost); });
     return st;
   }
 
@@ -130,5 +139,5 @@
   }
 
   root.FS = root.FS || {};
-  root.FS.store = { KEY, STATUS, uid, load, save, get, user, log, storeById, projectById, onChange, emit, exportJson, importJson, reset, defaultState };
+  root.FS.store = { KEY, STATUS, uid, defaultSpec, load, save, get, user, log, storeById, projectById, onChange, emit, exportJson, importJson, reset, defaultState };
 })(self);
