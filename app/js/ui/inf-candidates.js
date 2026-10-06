@@ -21,7 +21,7 @@
     main.innerHTML = '<h1>候補者データベース</h1><p class="lead">インフルエンサー候補を登録・管理します。確認できない情報は「未確認」のままにし、数値には取得元と確認日を記録します。</p>' +
       '<div class="row" style="margin-bottom:10px"><div class="field" style="flex:2 1 240px"><label>検索（地域・駅名・料理・ハッシュタグ・名前）</label><input type="search" id="q" value="' + esc(q) + '" placeholder="例：高松 スイーツ"></div>' +
       '<div class="field"><label>SNS</label><select id="pf"><option value="">すべて</option>' + Object.keys(I.PLATFORMS).map((k) => '<option value="' + k + '"' + (pf === k ? ' selected' : '') + '>' + I.PLATFORMS[k] + '</option>').join('') + '</select></div></div>' +
-      '<div class="btns" style="margin-bottom:12px"><button class="btn primary" id="add">＋ 候補者を登録</button><button class="btn" id="search">検索結果をまとめて登録</button><label class="btn">CSVから一括登録<input type="file" id="csvIn" accept=".csv,.tsv,.txt" hidden></label><button class="btn" id="csvOut">CSVで書き出す（' + rows.length + '件）</button><button class="btn" id="tpl">CSVのひな形</button></div>' +
+      '<div class="btns" style="margin-bottom:12px"><button class="btn primary" id="bulk">URLを一括登録</button><button class="btn" id="add">＋ 1件ずつ登録</button><button class="btn" id="search">検索結果をまとめて登録</button><label class="btn">CSVから一括登録<input type="file" id="csvIn" accept=".csv,.tsv,.txt" hidden></label><button class="btn" id="csvOut">CSVで書き出す（' + rows.length + '件）</button><button class="btn" id="tpl">CSVのひな形</button></div>' +
       (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>候補者</th><th>SNS</th><th>活動地域</th><th>ジャンル</th><th class="num">フォロワー数</th><th>費用</th><th>情報の充足度</th><th>取得元</th></tr></thead><tbody>' +
         rows.map((c) => {
           const comp = I.completeness(c);
@@ -35,6 +35,7 @@
     U.$('#pf', main).addEventListener('change', (e) => { sessionStorage.setItem('cand-pf', e.target.value); list(main); });
     U.$('#add', main).addEventListener('click', () => { location.hash = '#/inf/cand/new'; });
     U.$('#search', main).addEventListener('click', () => registerSearch(null, () => list(main)));
+    U.$('#bulk', main).addEventListener('click', () => bulkUrls(null, () => list(main)));
     U.$$('tr[data-id]', main).forEach((tr) => tr.addEventListener('click', () => { location.hash = '#/inf/cand/' + tr.dataset.id; }));
     U.$('#csvOut', main).addEventListener('click', () => {
       U.download('インフルエンサー候補_' + X.today() + '.csv', I.toCsv(rows), 'text/csv;charset=utf-8');
@@ -85,6 +86,78 @@
     });
     S.save(true);
     U.toast(addable.length + '件を登録しました', 'ok');
+    done();
+  }
+
+  // ───────── URLの一括登録 ─────────
+  // 貼り付けたURLを読み取り → 確認画面 → 登録（重複・投稿URLなどは登録しない）→ 公式APIで数値を自動取得 → キャンペーンなら自動選定
+  async function bulkUrls(campaign, done) {
+    const st = X.inf();
+    const res = await U.modal({
+      title: 'URLを一括登録',
+      body: '<p class="small">インフルエンサーのプロフィールURLを貼り付けてください。1行に複数あっても、名前などが混ざっていても読み取ります。「@アカウント名」だけの場合は Instagram として登録します。</p>' +
+        '<div class="field"><label>プロフィールURL</label><textarea id="bu" class="mono" style="min-height:200px" placeholder="https://www.instagram.com/xxxx/\nhttps://www.instagram.com/yyyy/\n@zzzz"></textarea></div>' +
+        '<div class="row"><div class="field"><label>登録するキャンペーン（任意）</label><select id="bc"><option value="">（キャンペーンに入れない）</option>' + st.campaigns.map((c) => '<option value="' + c.id + '"' + (campaign && campaign.id === c.id ? ' selected' : '') + '>' + esc(c.title) + '</option>').join('') + '</select></div>' +
+        '<div class="field"><label>入手経路のメモ（任意）</label><input type="text" id="bm" placeholder="例：店舗からの紹介、Instagramで検索"></div></div>',
+      confirmLabel: '読み取る',
+      collect: (bg) => ({ text: bg.querySelector('#bu').value, campId: bg.querySelector('#bc').value, memo: bg.querySelector('#bm').value.trim() }),
+    });
+    if (!res) return;
+    const items = I.parseUrlList(res.text);
+    if (!items.length) { U.toast('URLが入力されていません', 'error'); return; }
+    const camp = st.campaigns.find((c) => c.id === res.campId) || null;
+    items.forEach((it) => {
+      if (it.error || it.dupInList) return;
+      const ex = st.candidates.find((c) => I.parseProfileUrl(c.profileUrl).key === it.key || (c.platform === it.platform && String(c.handle).toLowerCase() === String(it.handle).toLowerCase()));
+      if (ex) it.existing = ex;
+    });
+    const newItems = items.filter((x) => !x.error && !x.dupInList && !x.existing);
+    const exItems = items.filter((x) => x.existing);
+    const bad = items.filter((x) => x.error || x.dupInList);
+    const label = (x) => x.error ? '<b style="color:var(--danger)">' + esc(x.error) + '</b>' : x.dupInList ? '同じURLが' + x.dupInList + '行目にもあるため1件にまとめます' : x.existing ? '登録済み（' + esc(X.candLabel(x.existing)) + '）' + (camp ? '→ キャンペーンに追加' : '') : '新規登録';
+    const ok = await U.modal({
+      title: '一括登録の確認',
+      body: '<p>新規 <b>' + newItems.length + '件</b>' + (exItems.length ? '・登録済み ' + exItems.length + '件' : '') + (bad.length ? '・<span style="color:var(--danger)">登録しない ' + bad.length + '件</span>' : '') + (camp ? '　→ キャンペーン「' + esc(camp.title) + '」に追加' : '') + '</p>' +
+        '<div class="table-wrap" style="max-height:340px;overflow:auto"><table class="tbl small"><thead><tr><th>行</th><th>SNS</th><th>アカウント</th><th>結果</th></tr></thead><tbody>' +
+        items.map((x) => '<tr class="' + (x.error || x.dupInList ? 'flag' : '') + '"><td>' + x.line + '</td><td>' + esc(x.platform ? I.PLATFORMS[x.platform] : '') + '</td><td>' + esc(x.handle ? '@' + x.handle : x.raw) + '</td><td>' + label(x) + '</td></tr>').join('') + '</tbody></table></div>' +
+        '<p class="small muted">登録後、設定済みの公式API（Instagram・YouTube）でフォロワー数などを自動で取得します。取得できない項目は「未確認」のままです。</p>',
+      check: newItems.length || (camp && exItems.length) ? '登録する内容を確認しました' : null,
+      confirmLabel: newItems.length || (camp && exItems.length) ? '登録する' : null,
+      cancelLabel: '閉じる',
+    });
+    if (!ok) return;
+    const touched = [];
+    newItems.forEach((x) => {
+      const c = X.newCandidate();
+      Object.assign(c, { profileUrl: x.url, platform: x.platform, handle: x.handle, displayName: '' });
+      if (x.platform === 'youtube' && /^UC[\w-]{10,}$/.test(x.handle)) c.youtubeChannelId = x.handle;
+      c.source = { type: 'URL一括登録', detail: res.memo, obtainedAt: X.today(), by: S.user() };
+      st.candidates.push(c);
+      X.pushHistory(c, ['URL一括登録' + (res.memo ? '（' + res.memo + '）' : '')], '候補者を登録しました（URL一括）');
+      touched.push(c);
+    });
+    exItems.forEach((x) => touched.push(x.existing));
+    if (camp) touched.forEach((c) => X.ensureLink(camp.id, c.id));
+    S.log('URLから候補者を一括登録しました', { type: 'influencer', id: camp ? camp.id : '', label: camp ? camp.title : '候補者データベース' }, '新規' + newItems.length + '件・登録済み' + exItems.length + '件・登録しない' + bad.length + '件');
+    S.save(true);
+    U.toast(newItems.length + '件を登録しました。公式APIで情報を取得しています…', 'ok');
+    // 公式APIで自動取得 → キャンペーンなら自動選定
+    let log = null;
+    try { log = await root.FS.infautoui.enrich(touched, camp); } catch (e) { log = { errors: [e.message], notes: [], igFetched: 0, ytFetched: 0 }; }
+    let sel = null;
+    if (camp) {
+      sel = { apiCalls: [], errors: [], notes: [], added: 0, updated: 0, priority: 0, candidate: 0, drafts: 0, passed: 0 };
+      await root.FS.infautoui.selectFor(camp, sel);
+      S.save(true);
+    }
+    await U.modal({
+      title: '一括登録の結果',
+      body: '<ul><li>新規登録：' + newItems.length + '件' + (exItems.length ? '（登録済み ' + exItems.length + '件）' : '') + '</li><li>公式APIで情報を取得：Instagram ' + (log.igFetched || 0) + '件・YouTube ' + (log.ytFetched || 0) + '件</li>' +
+        (sel ? '<li>自動選定（地域・フォロワー数・ジャンル）：条件に合う ' + sel.passed + '件、うち優先候補へ ' + sel.priority + '件・候補へ ' + sel.candidate + '件</li>' : '') + '</ul>' +
+        ((log.notes || []).length ? '<div class="alert warn small">' + log.notes.map(esc).join('<br>') + '</div>' : '') +
+        ((log.errors || []).length ? '<div class="alert danger small">取得できなかったもの：<br>' + log.errors.slice(0, 10).map(esc).join('<br>') + (log.errors.length > 10 ? '<br>ほか' + (log.errors.length - 10) + '件' : '') + '</div>' : ''),
+      confirmLabel: 'OK', hideCancel: true,
+    });
     done();
   }
 
@@ -278,4 +351,5 @@
   root.FS.views.infCandidates = list;
   root.FS.views.infCandidate = edit;
   root.FS.infui.registerSearch = registerSearch;
+  root.FS.infui.bulkUrls = bulkUrls;
 })(self);

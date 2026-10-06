@@ -143,3 +143,24 @@ test('連絡文の下書き：未入力の条件は【要確認】として残�
   assert.match(t, /無料でのご招待/);
   assert.match(t, /PR/);
 });
+
+test('URL一括登録：プロフィールURL・@名を読み取り、投稿URL・重複・読めない行を区別する', () => {
+  const text = [
+    'https://www.instagram.com/test_aaa/?igsh=xyz',
+    '高松グルメ子さん instagram.com/test_bbb 　紹介：@test_ccc',
+    'https://www.instagram.com/p/ABC123/',
+    'https://www.instagram.com/TEST_AAA',
+    'https://www.tiktok.com/@test_ddd',
+    'https://www.youtube.com/@TestChannel/videos',
+    'https://www.youtube.com/watch?v=xyz',
+    'メモだけの行',
+  ].join('\n');
+  const items = I.parseUrlList(text);
+  const ok = items.filter((x) => !x.error && !x.dupInList).map((x) => x.platform + ':' + x.handle);
+  assert.deepEqual(ok, ['instagram:test_aaa', 'instagram:test_bbb', 'instagram:test_ccc', 'tiktok:test_ddd', 'youtube:TestChannel']);
+  assert.equal(items.find((x) => x.raw.includes('/p/')).error.includes('投稿のURL'), true);
+  assert.equal(items.find((x) => x.raw.includes('TEST_AAA')).dupInList, 1);
+  assert.equal(items.find((x) => x.raw.includes('watch')).error.includes('動画のURL'), true);
+  assert.equal(items.find((x) => x.raw === 'メモだけの行').error.includes('見つかりません'), true);
+  assert.equal(items[0].url, 'https://www.instagram.com/test_aaa/');
+});

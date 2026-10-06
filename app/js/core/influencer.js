@@ -501,7 +501,42 @@
     return lines.join('\n');
   }
 
+  // 貼り付けた文章からプロフィールURL（と @アカウント名）を取り出す。投稿・動画のURLや読めない行は理由付きで返す。
+  // @だけのアカウント名は Instagram として扱う。
+  function parseUrlList(text) {
+    const items = [];
+    const seen = {};
+    String(text || '').split(/\r?\n/).forEach((line, i) => {
+      const raw = line.trim();
+      if (!raw) return;
+      const tokens = (raw.match(/(?:https?:\/\/)?(?:www\.|m\.)?(?:instagram\.com|tiktok\.com|youtube\.com|youtu\.be|x\.com|twitter\.com)\/[^\s、,，"'<>）)]+|(?:^|[\s、,，(（:：「])@[A-Za-z0-9_.]{2,30}/g) || []).map((t) => t.replace(/^[\s、,，(（:：「]+/, ''));
+      if (!tokens.length) { items.push({ line: i + 1, raw, error: 'URL・@アカウント名が見つかりません' }); return; }
+      tokens.forEach((t) => {
+        const it = { line: i + 1, raw: t };
+        let url = t;
+        if (/^@/.test(t)) url = 'https://www.instagram.com/' + t.slice(1) + '/';
+        else if (!/^https?:\/\//i.test(t)) url = 'https://' + t;
+        if (/instagram\.com\/(p|reel|reels|tv|stories|explore)\//i.test(url)) it.error = '投稿のURLです（プロフィールのURLを送ってください）';
+        else if (/youtube\.com\/(watch|shorts)|youtu\.be\//i.test(url)) it.error = '動画のURLです（チャンネルのURLを送ってください）';
+        else if (/tiktok\.com\/@[^/]+\/video\//i.test(url)) it.error = '動画のURLです（プロフィールのURLを送ってください）';
+        if (!it.error) {
+          const p = parseProfileUrl(url);
+          if (!p.platform || p.platform === 'other' || !p.handle) it.error = '対応していないURLです（Instagram・TikTok・YouTube・Xのプロフィールのみ）';
+          else {
+            it.platform = p.platform; it.handle = p.handle.replace(/^channel:/, ''); it.key = p.key;
+            it.url = p.platform === 'instagram' ? 'https://www.instagram.com/' + p.handle + '/' : p.platform === 'tiktok' ? 'https://www.tiktok.com/@' + p.handle : url.replace(/[?#].*$/, '');
+            if (seen[p.key]) it.dupInList = seen[p.key];
+            else seen[p.key] = i + 1;
+          }
+        }
+        items.push(it);
+      });
+    });
+    return items;
+  }
+
   const api = {
+    parseUrlList,
     PLATFORMS, FORMATS, VIDEO_FORMATS, PURPOSES, STATUSES, FACT_STATUS, COMPENSATION, CRITERIA, CSV_COLUMNS,
     defaultSettings, fact, isKnown, factLabel, toList, toNumList, parseNum, parseProfileUrl, findDuplicates,
     evaluate, completeness, matchesText, filterForCampaign, toCsv, fromCsvRow, contactDraft, csvCell, splitAddress,

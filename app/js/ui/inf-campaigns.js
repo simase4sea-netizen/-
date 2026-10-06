@@ -161,7 +161,7 @@
       '<div class="field" style="flex:0 1 120px"><label>総合点 以上</label><input type="text" id="fm" value="' + esc(f.minScore || '') + '"></div></div>' +
       '<div class="btns small"><label><input type="checkbox" id="fr"' + (f.regionFit ? ' checked' : '') + '> 地域が合う（所在地・来店エリア）</label><label><input type="checkbox" id="fg"' + (f.genreFit ? ' checked' : '') + '> ジャンルが合う</label><label><input type="checkbox" id="fpu"' + (f.purposeFit ? ' checked' : '') + '> 目的・SNS・形式が合う</label><label><input type="checkbox" id="fi"' + (f.hideInsufficient ? ' checked' : '') + '> 判定材料不足を隠す</label>' +
       '<span class="muted">「合う」＝その項目が' + st.settings.fitThreshold + '点以上（未確認は含めない）</span></div></div>' +
-      '<div class="btns" style="margin-bottom:10px"><button class="btn" id="addSearch">検索結果をまとめて登録</button><a class="btn" href="#/inf/cand/new">候補者を1件登録</a><button class="btn primary" id="toCompare">選んだ候補を比較（' + sel.size + '件）</button><span class="small muted">' + rows.length + '／' + all.length + '件を表示</span></div>' +
+      '<div class="btns" style="margin-bottom:10px"><button class="btn primary" id="bulkUrl">URLを一括登録</button><button class="btn" id="addSearch">検索結果をまとめて登録</button><a class="btn" href="#/inf/cand/new">候補者を1件登録</a><button class="btn primary" id="toCompare">選んだ候補を比較（' + sel.size + '件）</button><span class="small muted">' + rows.length + '／' + all.length + '件を表示</span></div>' +
       (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>比較</th><th>候補者</th><th>起用状況</th><th>活動地域・ジャンル</th><th class="num">フォロワー数</th><th>評価点</th><th style="min-width:150px">3条件（地域・フォロワー数・ジャンル）</th><th style="min-width:240px">評価理由・懸念点</th><th>費用</th><th>充足度</th></tr></thead><tbody>' +
         rows.map(({ cand, ev, link }) => '<tr><td><input type="checkbox" data-sel="' + cand.id + '"' + (sel.has(cand.id) ? ' checked' : '') + '></td>' +
           '<td><a href="#" data-open="' + cand.id + '"><b>' + esc(cand.displayName || '名称未入力') + '</b></a><div class="small">@' + esc(cand.handle) + '・' + esc(I.PLATFORMS[cand.platform]) + '</div><div class="small"><a href="' + esc(cand.profileUrl) + '" target="_blank" rel="noopener noreferrer">プロフィールを開く</a></div></td>' +
@@ -171,7 +171,7 @@
           '<td class="small">' + root.FS.infauto.judge(camp, cand, ev, st.settings).reasons.map((r) => '<div style="color:' + (r[0] === '○' ? 'var(--ok)' : 'var(--danger)') + '">' + esc(r.length > 60 ? r.slice(0, 60) + '…' : r) + '</div>').join('') + '</td>' +
           '<td class="small">' + (ev.reasons.slice(0, 2).map((r) => '<div>✓ ' + esc(r) + '</div>').join('') || '<div class="muted">高評価の根拠はまだありません</div>') + ev.concerns.slice(0, 2).map((r) => '<div style="color:var(--warn)">! ' + esc(r) + '</div>').join('') + '</td>' +
           '<td class="nowrap">' + X.feeView(cand.fee) + '</td><td>' + ev.completeness.pct + '%</td></tr>').join('') + '</tbody></table></div>'
-        : '<div class="empty">' + (all.length ? '条件に合う候補がいません。絞り込みを緩めてください。' : '候補者が登録されていません。「検索結果をまとめて登録」などから追加してください。') + '</div>');
+        : '<div class="empty">' + (all.length ? '条件に合う候補がいません。絞り込みを緩めてください。' : '候補者が登録されていません。「URLを一括登録」でプロフィールURLを貼り付けて追加してください。') + '</div>');
 
     const save = () => {
       const nf = { text: U.$('#fq', pane).value, platform: U.$('#fp', pane).value, status: U.$('#fs', pane).value, minScore: U.$('#fm', pane).value, regionFit: U.$('#fr', pane).checked, genreFit: U.$('#fg', pane).checked, purposeFit: U.$('#fpu', pane).checked, hideInsufficient: U.$('#fi', pane).checked };
@@ -191,6 +191,7 @@
       location.hash = '#/inf/c/' + camp.id + '?tab=compare';
     });
     U.$('#addSearch', pane).addEventListener('click', () => X.registerSearch(camp, () => candsTab(pane, camp)));
+    U.$('#bulkUrl', pane).addEventListener('click', () => X.bulkUrls(camp, () => candsTab(pane, camp)));
     const runBtn = U.$('#runAuto', pane);
     runBtn.addEventListener('click', async () => {
       runBtn.disabled = true; runBtn.textContent = '自動選定を実行中…';

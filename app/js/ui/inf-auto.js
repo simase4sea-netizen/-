@@ -57,6 +57,12 @@
       log.apiCalls.push('YouTube channels.list（1ユニット）');
       channels.push(...(r.items || []));
     }
+    return channelsData(channels, camp, c, log);
+  }
+
+  // チャンネルの直近動画（再生数・反応）を取り、候補者データにする
+  async function channelsData(channels, camp, c, log) {
+    const key = encodeURIComponent(c.youtubeKey);
     const uploads = {};
     for (const ch of channels) {
       const pl = ch.contentDetails && ch.contentDetails.relatedPlaylists && ch.contentDetails.relatedPlaylists.uploads;
@@ -75,6 +81,49 @@
       (r.items || []).forEach((v) => { videos[v.id] = v; });
     }
     return channels.map((ch) => A.fromYouTube(ch, (uploads[ch.id] || []).map((id) => videos[id]).filter(Boolean), camp, { today: X.today() }));
+  }
+
+  // URLで登録した YouTube チャンネル（@ハンドル または チャンネルID）の情報を取る
+  async function youtubeByRefs(refs, camp, c, log) {
+    const key = encodeURIComponent(c.youtubeKey);
+    const channels = [];
+    for (const ref of refs) {
+      const q = /^UC[\w-]{10,}$/.test(ref) ? 'id=' + encodeURIComponent(ref) : 'forHandle=' + encodeURIComponent('@' + ref.replace(/^@/, ''));
+      try {
+        const r = await getJson(YT + 'channels?part=snippet,statistics,contentDetails&' + q + '&key=' + key, 'YouTube「' + ref + '」');
+        log.apiCalls.push('YouTube channels.list（1ユニット）');
+        if (r.items && r.items[0]) channels.push(r.items[0]); else log.errors.push('YouTube「' + ref + '」：チャンネルが見つかりません');
+      } catch (e) { log.errors.push(e.message); }
+    }
+    return channelsData(channels, camp, c, log);
+  }
+
+  // URL一括登録した候補の情報を、設定済みの公式APIで自動取得する（TikTok は公式APIが無いため取得しない）
+  async function enrich(cands, camp) {
+    const c = cfg();
+    const log = { apiCalls: [], errors: [], notes: [], added: 0, updated: 0, igFetched: 0, ytFetched: 0 };
+    const cp = camp || {};
+    const ig = cands.filter((x) => x.platform === 'instagram');
+    const yt = cands.filter((x) => x.platform === 'youtube');
+    if (ig.length) {
+      if (c.igToken && c.igUserId) {
+        for (const x of ig) {
+          try { upsert(await instagramFetch(x.handle, cp, c), log); log.igFetched++; log.apiCalls.push('Instagram business_discovery @' + x.handle); }
+          catch (e) { log.errors.push(e.message); x.auto = Object.assign({ regionEvidence: [], genreEvidence: [], linked: [] }, x.auto || {}, { lastTried: X.today(), lastError: e.message }); }
+        }
+      } else log.notes.push('Instagram の取得設定が未設定のため、' + ig.length + '件のフォロワー数などは「未確認」のままです（評価の設定 → 自動選定の設定）');
+    }
+    if (yt.length) {
+      if (c.youtubeKey) {
+        const before = log.updated;
+        (await youtubeByRefs(yt.map((x) => x.youtubeChannelId || x.handle), cp, c, log)).forEach((d) => upsert(d, log));
+        log.ytFetched = log.updated - before;
+      } else log.notes.push('YouTube Data API キーが未設定のため、' + yt.length + '件の登録者数などは「未確認」のままです');
+    }
+    const tt = cands.filter((x) => x.platform === 'tiktok' || x.platform === 'x').length;
+    if (tt) log.notes.push('TikTok・Xは商用で使える公式APIが無いため、' + tt + '件はURLのみ登録しました（数値は未確認）');
+    S.save(true);
+    return log;
   }
 
   // ───── Instagram Graph API（Business Discovery）─────
@@ -273,5 +322,5 @@
     });
   }
 
-  root.FS.infautoui = { cfg, run, autoRunIfDue, autoRunAll, runSummaryHtml, renderSettings, selectFor, lastRun };
+  root.FS.infautoui = { enrich, cfg, run, autoRunIfDue, autoRunAll, runSummaryHtml, renderSettings, selectFor, lastRun };
 })(self);
