@@ -179,6 +179,23 @@
     return GP.normalizeSets(JSON.parse(text), ctx.setCount);
   }
 
+  // 店舗情報の整理：資料（貼り付けた本文・スクリーンショット・過去投稿）1件から、店舗情報の候補を根拠つきで抜き出す。
+  // 呼び出し側で送信前の確認画面を必ず通す。結果は候補として扱い、担当者が採用するまで使わない。
+  async function extractStoreInfo(storeName, source, images) {
+    const GC = root.FS.gcollect;
+    const blocks = [];
+    (images || []).forEach((img) => {
+      const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,(.+)$/.exec(img.dataUrl || '');
+      if (m) blocks.push({ type: 'image', source: { type: 'base64', media_type: m[1], data: m[2] } });
+    });
+    const text = await call({
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema: GC.extractSchema() } },
+      system: GC.extractSystemPrompt(),
+      messages: [{ role: 'user', content: blocks.concat([{ type: 'text', text: GC.extractUserPrompt(storeName, source) }]) }],
+    });
+    return GC.fromAiResult(JSON.parse(text), source.text || '', !source.text && blocks.length > 0);
+  }
+
   root.FS = root.FS || {};
-  root.FS.ai = { ping, readAdMetricsFromImage, extractMinutes, generateGooglePosts, MODEL };
+  root.FS.ai = { ping, readAdMetricsFromImage, extractMinutes, generateGooglePosts, extractStoreInfo, MODEL };
 })(self);

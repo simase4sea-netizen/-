@@ -322,5 +322,5 @@
     });
   }
 
-  root.FS.infautoui = { enrich, cfg, run, autoRunIfDue, autoRunAll, runSummaryHtml, renderSettings, selectFor, lastRun };
+  root.FS.infautoui = { getJson, enrich, cfg, run, autoRunIfDue, autoRunAll, runSummaryHtml, renderSettings, selectFor, lastRun };
 })(self);

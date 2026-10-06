@@ -63,6 +63,7 @@
       '<tr><th>使用した店舗</th><td>' + esc(store ? store.name : c.store.name) + '（' + G.kindLabel(c.store.kind) + '）<span class="muted">　店舗ID：' + esc(p.storeId) + '</span>' + (c.brand.name ? '<br>ブランド：' + esc(c.brand.name) : '') + '<br>文章トーン：' + esc(c.tone || '指定なし') + (c.toneSource ? '（' + c.toneSource + '）' : '') + '</td></tr>' +
       '<tr><th>参照した商品・価格・アクセス</th><td>' + (ref.length ? ref.map(esc).join('<br>') : '<span class="muted">なし</span>') + '</td></tr>' +
       (p.usedFacts && p.usedFacts.length ? '<tr><th>本文に使った登録情報</th><td>' + p.usedFacts.map(esc).join('<br>') + '</td></tr>' : '') +
+      '<tr><th>参考にした過去投稿</th><td>' + ((c.pastPosts || []).length ? (c.pastPosts || []).length + '件（この店舗の過去投稿。文章の雰囲気の参考のみ）' : 'なし') + '</td></tr>' +
       '<tr><th>季節表現</th><td>' + (c.season.use ? '使う：' + esc(c.season.label) : '使わない') + '<br>本文で見つかった季節語：' + (seasonDetected.length ? esc(seasonDetected.join('、')) : 'なし') + '</td></tr>' +
       '<tr><th>文字数</th><td>キャッチコピー ' + v.counts.catchcopy + ' 字（目安 ' + sp.writingGuide.catchcopyMaxChars + ' 字）／日本語 ' + v.counts.ja + ' 字（目安 ' + sp.writingGuide.jaRecommendedMin + '〜' + sp.writingGuide.jaRecommendedMax + ' 字）／英語 ' + v.counts.en + ' 字</td></tr>' +
       '<tr><th>Google仕様との照合</th><td>' + (v.googleSpec.ok ? '<span class="badge ok">上限内</span>' : '<span class="badge danger">上限超過</span>') + ' 本文上限 ' + v.counts.maxChars + ' 字（日本語・英語それぞれ）<br><span class="muted">仕様値の確認日 ' + esc(sp.verifiedAt) + '</span>' + (sp.needsReverification ? ' <span class="badge warn">仕様値は要再確認</span>' : '') + '</td></tr>' +
@@ -174,8 +175,11 @@
     if (m) draft.mode = m.value;
   }
 
-  function create(main) {
+  function create(main, params) {
     const st = S.get();
+    // 「この店舗の投稿を作成」から開いた場合は、その店舗を選んだ状態にする
+    const pre = params && params.get && params.get('store');
+    if (pre && S.storeById(pre)) draft.storeIds = [pre];
     const sp = spec();
     // 生成方法：担当者が選んでいなければ、AIが使えるときはAI生成、使えないときはデモ生成
     if (!draft.modeChosen || (draft.mode === 'ai' && !aiReady())) draft.mode = aiReady() ? 'ai' : 'demo';
@@ -276,7 +280,7 @@
       (x.conflicts.length ? '<div class="alert danger small"><b>投稿入力と登録情報が違います。どちらを使うか選んでください（選ぶまで生成できません）。</b></div><table class="tbl small"><thead><tr><th>項目</th><th>投稿入力</th><th>登録情報</th></tr></thead><tbody>' +
         x.conflicts.map((cf) => '<tr><td>' + esc(cf.label) + '</td><td><label><input type="radio" name="r|' + x.storeId + '|' + cf.field + '" value="input"> ' + esc(cf.input) + '</label></td><td><label><input type="radio" name="r|' + x.storeId + '|' + cf.field + '" value="store"> ' + esc(cf.store) + '</label></td></tr>').join('') + '</tbody></table>' : '') +
       '<div class="small"><b>確認事項・不足情報（推測で補わず、確認欄に表示します）</b>' + (x.confirmations.length ? '<ul>' + x.confirmations.map((n) => '<li>' + esc(n) + '</li>').join('') + '</ul>' : '<p class="muted">ありません。</p>') + '</div>' +
-      '<div class="small muted">文章トーン：' + esc(x.ctx.tone || '指定なし（丁寧で親しみやすい）') + (x.toneSource ? '（' + x.toneSource + '）' : '') + '／季節表現：' + (x.ctx.season.use ? esc(x.ctx.season.label) : '使わない') + '／案の数：' + x.ctx.setCount + '</div></div>').join('');
+      '<div class="small muted">文章トーン：' + esc(x.ctx.tone || '指定なし（丁寧で親しみやすい）') + (x.toneSource ? '（' + x.toneSource + '）' : '') + '／季節表現：' + (x.ctx.season.use ? esc(x.ctx.season.label) : '使わない') + '／案の数：' + x.ctx.setCount + '／参考にする過去投稿：' + (x.ctx.pastPosts || []).length + '件</div></div>').join('');
 
     const res = await U.modal({
       title: '生成前の確認（' + pre.length + '店舗）',
@@ -461,12 +465,12 @@
       '<div class="panel"><h2>ブランド共通の情報</h2><p class="small muted">同じブランドの複数店舗で共有する情報です（業種・特徴・文章トーン・よく使う表現・避けたい表現・参考投稿・注意事項）。店舗の情報と違う場合は、店舗の情報を優先します。自社店舗と顧客案件で同じブランドは使えません。</p>' +
       (brands.length ? '<table class="tbl" id="brandList"><thead><tr><th>ブランド名</th><th>業種</th><th>文章トーン</th><th>使用店舗</th><th></th></tr></thead><tbody>' + brands.map((b) => '<tr><td><b>' + esc(b.name) + '</b></td><td>' + esc(b.industry) + '</td><td>' + esc(b.tone) + '</td><td class="small">' + (usage(b.id).map((s) => esc(s.name)).join('、') || '<span class="muted">なし</span>') + '</td><td class="right"><a class="btn small" href="#/gpost/brand/' + b.id + '">編集</a></td></tr>').join('') + '</tbody></table>' : '<div class="empty">ブランドは未登録です。</div>') +
       '<div class="btns" style="margin-top:10px"><a class="btn primary" href="#/gpost/brand/new" id="addBrand">＋ ブランドを追加</a></div></div>' +
-      '<div class="panel"><h2>店舗ごとの情報</h2><table class="tbl" id="gStoreList"><thead><tr><th>店舗</th><th>ブランド</th><th>登録状況</th><th>確認日</th><th></th></tr></thead><tbody>' +
+      '<div class="panel"><h2>店舗ごとの情報</h2><table class="tbl" id="gStoreList"><thead><tr><th>店舗</th><th>ブランド</th><th>登録状況</th><th>確認日</th><th>未確認の候補</th><th></th></tr></thead><tbody>' +
       stores.map((s) => {
         const info = GP.storeInfo(s);
         const b = brandById(info.brandId);
         const old = info.verifiedAt && (new Date(today()) - new Date(info.verifiedAt)) / 86400000 > 90;
-        return '<tr><td>' + U.kindBadge(s.kind) + ' <b>' + esc(s.name) + '</b></td><td>' + (b ? esc(b.name) : '<span class="muted">未設定</span>') + '</td><td class="small">' + filledCount(info) + '/' + GP.STORE_FIELDS.length + '項目・メニュー' + info.menu.length + '件・CTA' + info.ctaOptions.length + '件</td><td class="small">' + (info.verifiedAt ? esc(info.verifiedAt) + (old ? ' <span class="badge warn">90日以上前</span>' : '') : '<span class="badge warn">未登録</span>') + '</td><td class="right"><a class="btn small" href="#/gpost/store/' + s.id + '">編集</a></td></tr>';
+        return '<tr><td>' + U.kindBadge(s.kind) + ' <b>' + esc(s.name) + '</b></td><td>' + (b ? esc(b.name) : '<span class="muted">未設定</span>') + '</td><td class="small">' + filledCount(info) + '/' + GP.STORE_FIELDS.length + '項目・メニュー' + info.menu.length + '件・CTA' + info.ctaOptions.length + '件</td><td class="small">' + (info.verifiedAt ? esc(info.verifiedAt) + (old ? ' <span class="badge warn">90日以上前</span>' : '') : '<span class="badge warn">未登録</span>') + '</td><td>' + (info.candidates.filter((c) => c.status === 'pending').length ? '<a class="badge warn" href="#/gpost/info/' + s.id + '">' + info.candidates.filter((c) => c.status === 'pending').length + '件</a>' : '<span class="muted small">なし</span>') + '</td><td class="right nowrap"><a class="btn small" href="#/gpost/info/' + s.id + '">情報の整理</a> <a class="btn small" href="#/gpost/store/' + s.id + '">編集</a></td></tr>';
       }).join('') + '</tbody></table><p class="small muted">店舗の追加・店舗名・区分の変更は「店舗・案件」画面で行います。</p></div>' +
       '<div class="panel"><h2>CSVで一括登録・出力</h2><p class="small">一度書き出したCSVの見出しのまま編集して取り込みます。ID が空欄の行は新規、ID がある行は更新です。<b>1行でもエラーがあれば、全件取り込みません。</b>登録は「ブランド → 店舗 → メニュー」の順に行ってください。CTAは「BOOK=https://…; LEARN_MORE=https://…」の形式です。</p>' +
       '<div class="btns"><button class="btn" data-exp="brands">ブランドCSV</button><button class="btn" data-exp="stores">店舗情報CSV</button><button class="btn" data-exp="menu">メニューCSV</button></div>' +
@@ -530,6 +534,7 @@
     const ctaRow = (o) => '<div class="row gp-cta"><div class="field" style="flex:0 1 180px"><select data-cta="type"><option value="">（種類）</option>' + sp.ctaTypes.map((t) => '<option value="' + esc(t.code) + '"' + (o.type === t.code ? ' selected' : '') + '>' + esc(t.ja) + '</option>').join('') + '</select></div><div class="field" style="flex:1 1 300px"><input type="text" data-cta="url" value="' + esc(o.url || '') + '" placeholder="https://（今すぐ電話は空欄）"></div></div>';
     main.innerHTML = '<div class="btns" style="margin-bottom:8px"><a class="btn small" href="#/gpost/stores">← 店舗情報一覧</a></div>' +
       storesBanner([s.id], '「Google投稿用の店舗情報」を編集しています') +
+      '<div class="btns" style="margin-bottom:12px"><a class="btn" href="#/gpost/info/' + s.id + '">URL・過去投稿から情報を整理' + (info.candidates.filter((c) => c.status === 'pending').length ? '（未確認の候補 ' + info.candidates.filter((c) => c.status === 'pending').length + '件）' : '') + '</a><a class="btn primary" href="#/gpost?store=' + s.id + '">この店舗の投稿を作成</a></div>' +
       '<div class="panel"><h2>ブランド</h2><div class="field"><select id="gBrand"><option value="">（ブランド未設定）</option>' + gp().brands.map((b) => '<option value="' + b.id + '"' + (info.brandId === b.id ? ' selected' : '') + '>' + esc(b.name) + '</option>').join('') + '</select></div><a class="small" href="#/gpost/brand/new">＋ ブランドを追加</a></div>' +
       '<div class="panel"><h2>Google投稿用の店舗情報</h2><p class="small muted">分からない項目は空欄にしてください（推測で埋めない）。空欄の項目は投稿文に書かれず、確認事項に表示されます。</p><div class="grid2"><div>' +
       GP.STORE_FIELDS.slice(0, 11).map((f) => fieldInput('gs-', f, info[f[0]])).join('') + '</div><div>' + GP.STORE_FIELDS.slice(11).map((f) => fieldInput('gs-', f, info[f[0]])).join('') + '</div></div>' +
@@ -539,6 +544,12 @@
       '<div class="panel"><h2>メニュー・商品</h2>' + (info.menu.length ? '<table class="tbl" id="menuList"><thead><tr><th>名前</th><th>説明</th><th>価格</th><th>販売期間</th><th></th></tr></thead><tbody>' + info.menu.map((m) => '<tr><td><b>' + esc(m.name) + '</b></td><td class="small">' + esc(m.description) + '</td><td class="nowrap">' + esc(m.price) + '</td><td class="small">' + esc(m.period) + '</td><td class="right nowrap"><button class="btn small" data-medit="' + m.id + '">編集</button> <button class="btn small danger" data-mdel="' + m.id + '">削除</button></td></tr>').join('') + '</tbody></table>' : '<div class="empty">メニューは未登録です。</div>') +
       '<div class="btns" style="margin-top:10px"><button class="btn" id="menuAdd">＋ メニューを追加</button></div></div>';
 
+    // 資料から採用した項目には出典を表示する
+    Object.keys(info.fieldSources || {}).forEach((k) => {
+      const el = U.$('[data-k="' + k + '"]', main);
+      const fs = info.fieldSources[k];
+      if (el && fs) el.insertAdjacentHTML('afterend', '<div class="hint">出典：' + esc(fs.sourceLabel) + (fs.fromPastPost ? '（過去投稿）' : '') + '・' + F.fmtDateTime(fs.appliedAt) + ' ' + esc(fs.by || '') + '採用</div>');
+    });
     U.$('#ctaAdd', main).addEventListener('click', () => U.$('#ctaRows', main).insertAdjacentHTML('beforeend', ctaRow({})));
     U.$('#gsSave', main).addEventListener('click', () => {
       const next = {};
@@ -557,6 +568,8 @@
       const changed = GP.STORE_FIELDS.concat(GP.STORE_META_FIELDS).filter((f) => (info[f[0]] || '') !== next[f[0]]).map((f) => f[1].replace(/（.*）/, ''));
       if (info.brandId !== next.brandId) changed.push('ブランド');
       if (GP.ctaToText(info.ctaOptions) !== GP.ctaToText(next.ctaOptions)) changed.push('CTA');
+      // 手で書き換えた項目は、資料からの出典を外す
+      Object.keys(info.fieldSources || {}).forEach((k) => { if ((info[k] || '') !== next[k]) delete info.fieldSources[k]; });
       s.gpost = Object.assign(info, next, { updatedAt: Date.now() });
       S.log('Google投稿用の店舗情報を保存しました', { type: 'gstore', id: s.id, label: s.name }, changed.length ? '変更：' + changed.join('・') : '変更なし');
       S.save(true);

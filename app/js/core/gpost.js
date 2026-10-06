@@ -63,7 +63,8 @@
   function countChars(text) { return Array.from(String(text === null || text === undefined ? '' : text)).length; }
 
   function emptyStoreInfo() {
-    const o = { brandId: '', ctaOptions: [], menu: [] };
+    // sources：参照URL・資料、pastPosts：過去投稿、candidates：資料から抜き出した情報の候補（採用するまで使わない）、fieldSources：採用した項目の出典
+    const o = { brandId: '', ctaOptions: [], menu: [], sources: [], pastPosts: [], candidates: [], fieldSources: {} };
     STORE_FIELDS.concat(STORE_META_FIELDS).forEach((f) => { o[f[0]] = ''; });
     return o;
   }
@@ -246,6 +247,7 @@
         notes: gp.notes || null, verifiedAt: gp.verifiedAt || null, verifiedSource: gp.verifiedSource || null, verifiedBy: gp.verifiedBy || null,
       },
       menu: bundle.menu.map((m) => ({ name: m.name, description: m.description || null, price: m.price || null, period: m.period || null })),
+      pastPosts: pastPostsOf(gp, 5),
       post,
       tone,
       toneSource,
@@ -263,7 +265,13 @@
     };
   }
 
-  // この店舗で使ってよい値（登録情報・投稿入力）
+  // 生成の参考にする過去投稿（この店舗のものだけ。新しい順に最大 n 件、長すぎるものは切る）。事実の根拠には使わない。
+  function pastPostsOf(gp, n) {
+    return (gp.pastPosts || []).slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (b.addedAt || 0) - (a.addedAt || 0))
+      .slice(0, n || 5).map((p) => ({ date: p.date || '', platform: p.platform || '', text: Array.from(String(p.text || '')).slice(0, 700).join('') }));
+  }
+
+  // この店舗で使ってよい値（登録情報・投稿入力）。過去投稿の価格などは現在と違う可能性があるため含めない。
   function allowedValues(ctx) {
     const p = ctx.post;
     return Object.values(ctx.store.facts)
@@ -381,6 +389,8 @@
     const bodyRest = ja.split('\n').slice(1).join('\n');
     const words = contentWords(copy).filter((w) => !(ctx.store.area && w === ctx.store.area));
     if (words.length && !words.some((w) => bodyRest.includes(w))) add('warn', 'copy_body_mismatch', 'キャッチコピーの語句が本文で触れられていません。内容が一致しているか確認してください。');
+    const copyN = norm(copy);
+    if (copyN.length >= 6) (ctx.pastPosts || []).forEach((pp) => { if (norm(pp.text).includes(copyN)) add('info', 'copy_reused', 'キャッチコピーが過去投稿（' + (pp.date || '日付不明') + '）と同じです。使い回しでよいか確認してください。'); });
     const siblings = opts.siblings || [];
     if (siblings.length > 1 && copy.includes('で味わう') && siblings.filter((s) => (s.catchcopy || '').includes('で味わう')).length > 1) add('info', 'copy_pattern', '複数案で「〜で味わう」の型が重なっています。切り口を変えることを検討してください。');
 
@@ -484,10 +494,10 @@
         CTA: p.cta ? p.cta.label + '（ボタンで表示。本文では「ご予約はボタンから」等の案内にとどめる）' : null,
         添付画像: p.imageNotes.length ? p.imageNotes.join('、') : null,
       }) +
-      '\n</facts>\n\n<avoid>\n' + (ctx.brand.avoidPhrases || '（指定なし）') + '\n</avoid>\n\n<reference_posts>\n' + (ctx.brand.referencePosts || '（なし）') + '\n</reference_posts>\n\n' +
+      '\n</facts>\n\n<past_posts>\n' + ((ctx.pastPosts || []).length ? ctx.pastPosts.map((pp, i) => '### 過去投稿' + (i + 1) + (pp.date ? '（' + pp.date + '）' : '') + '\n' + pp.text).join('\n\n') : '（なし）') + '\n</past_posts>\n\n<avoid>\n' + (ctx.brand.avoidPhrases || '（指定なし）') + '\n</avoid>\n\n<reference_posts>\n' + (ctx.brand.referencePosts || '（なし）') + '\n</reference_posts>\n\n' +
       '<tone>' + (ctx.tone || '丁寧で親しみやすい') + '</tone>\n\n<season>' + season + '</season>\n\n' +
       '案数: ' + ctx.setCount + '。' + (ctx.setCount > 1 ? '各案でキャッチコピーの切り口を変えてください。' : 'おすすめの1案を作成してください。') +
-      '\n<avoid> の表現は使わないでください。<reference_posts> は雰囲気の参考にとどめ、文言を流用しないでください。';
+      '\n<avoid> の表現は使わないでください。<reference_posts> と <past_posts> は文章の雰囲気・よく使う言い回しの参考にとどめ、文言やキャッチコピーを流用しないでください。<past_posts> の価格・販売期間・キャンペーンは古い可能性があるため、<facts> に無いものは書かないでください。';
   }
 
   const OUTPUT_SCHEMA = {

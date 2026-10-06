@@ -267,3 +267,5 @@ select[data-status] { min-width: 120px; }
 .gp-checks { list-style: none; padding: 0; margin: 0; font-size: 12.5px; }
 .gp-checks li { padding: 3px 0; }
 .badge.ok { background: var(--own-soft); color: var(--own); border-color: #b9dccb; }
+.gc-cand { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.gc-cand:last-child { border-bottom: 0; }
