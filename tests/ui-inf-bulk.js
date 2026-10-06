@@ -91,6 +91,7 @@ const SHOTS = process.env.SHOTS || '';
   const listText = await p.textContent('main');
   assert.ok(!listText.includes('名称未入力'));
   assert.match(listText, /@test_unknown_user/);
+  assert.match(listText, /香川県（高松・瓦町）\s*推定/); // プロフィール・投稿文から大まかなエリアを推定
   // まとめて再取得（取得できないものは未確認のまま）
   await p.click('#refetch');
   await p.click('.modal [data-act=ok]');

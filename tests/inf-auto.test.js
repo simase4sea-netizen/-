@@ -66,3 +66,16 @@ test('フォロワー数の条件：未確認は条件を満たさない（0扱�
   assert.equal(r.unknown, true);
   assert.equal(A.followerOk({}, { followers: I.fact() }).ok, true);
 });
+
+test('全国共通の地域・ジャンル判定：キャンペーンが無くてもおおまかなエリアを出す', () => {
+  const texts = [{ text: 'Non｜東京グルメ 渋谷・恵比寿のカフェとラーメン', where: 'プロフィール' }, { text: '#渋谷グルメ #恵比寿ランチ つけ麺', where: '投稿' }, { text: '横浜中華街で小籠包', where: '投稿' }];
+  const m = A.mergeDetected({ regions: [], genres: [] }, texts);
+  assert.equal(m.mainArea, '東京都（渋谷・恵比寿）');
+  assert.ok(m.areas.includes('渋谷') && m.areas.includes('東京'));
+  assert.ok(m.genres.includes('ラーメン') && m.genres.includes('カフェ'));
+  // 名字と紛らわしい県名は「県」が付かないと数えない
+  assert.equal(A.detectAreas([{ text: '石川さんと宮崎さんのランチ', where: 'x' }]).list.length, 0);
+  assert.equal(A.detectAreas([{ text: '石川県の金沢おでん', where: 'x' }]).prefs[0], '石川県');
+  // 地域の手掛かりが無ければ空（推測しない）
+  assert.equal(A.mergeDetected({ regions: [], genres: [] }, [{ text: 'おいしいごはん', where: 'x' }]).mainArea, '');
+});

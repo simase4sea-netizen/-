@@ -31,6 +31,78 @@
 
   function norm(s) { return String(s || '').toLowerCase(); }
 
+  // ───── 全国共通の地域辞書（キャンペーンに関係なく、プロフィール・投稿文からおおまかな活動エリアを判定）─────
+  // 都道府県：名字と紛らわしいものは「県」付きのときだけ数える
+  const PREFS = ['北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県', '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県', '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県', '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県', '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県'];
+  const PREF_SHORT_OK = ['北海道', '青森', '宮城', '茨城', '栃木', '群馬', '埼玉', '千葉', '東京', '神奈川', '新潟', '山梨', '岐阜', '静岡', '愛知', '三重', '滋賀', '京都', '大阪', '兵庫', '奈良', '和歌山', '鳥取', '島根', '広島', '徳島', '香川', '愛媛', '高知', '福岡', '佐賀', '長崎', '熊本', '大分', '鹿児島', '沖縄'];
+  // 主な市・エリア → 都道府県
+  const AREA_PREF = {
+    '東京都': ['都内', '23区', '渋谷', '新宿', '恵比寿', '中目黒', '代官山', '銀座', '有楽町', '丸の内', '池袋', '上野', '浅草', '秋葉原', '神田', '日本橋', '六本木', '麻布', '赤坂', '表参道', '原宿', '青山', '吉祥寺', '三軒茶屋', '下北沢', '自由が丘', '二子玉川', '品川', '目黒', '五反田', '新橋', '浜松町', '錦糸町', '北千住', '赤羽', '高円寺', '中野', '立川', '町田', '築地', '豊洲', '月島', '神楽坂', '四ツ谷', '御茶ノ水', '蒲田', '大井町', '人形町', '門前仲町', '清澄白河', '蔵前', '押上', '八王子', '荻窪', '西荻窪', '高田馬場', '大塚', '巣鴨', '虎ノ門', '大手町', '田町', '新大久保', '学芸大学', '祐天寺', '駒沢', '経堂', '国分寺', '武蔵小山', '戸越', '亀戸', '両国', '新小岩', '葛西', '練馬', '成増'],
+    '神奈川県': ['横浜', 'みなとみらい', '関内', '中華街', '川崎', '武蔵小杉', '鎌倉', '藤沢', '湘南', '横須賀', '相模原', '小田原', '箱根', '溝の口', 'たまプラーザ', '新百合ヶ丘', '本厚木', '海老名', '大和'],
+    '埼玉県': ['大宮', '浦和', '川越', '所沢', '越谷', '川口'],
+    '千葉県': ['船橋', '柏', '幕張', '浦安', '松戸', '津田沼', '市川'],
+    '大阪府': ['梅田', '難波', 'なんば', '心斎橋', '天王寺', '北新地', '天満', '堺', '本町', '中崎町', '鶴橋', '新世界', '十三', '江坂', '茨木', '豊中', '枚方'],
+    '京都府': ['祇園', '河原町', '烏丸', '嵐山'],
+    '兵庫県': ['神戸', '三宮', '元町', '姫路', '西宮', '芦屋', '尼崎', '明石'],
+    '愛知県': ['名古屋', '名駅', '金山', '大須', '岡崎', '豊橋', '一宮'],
+    '福岡県': ['博多', '天神', '中洲', '北九州', '小倉', '久留米'],
+    '北海道': ['札幌', 'すすきの', '函館', '旭川', '小樽'],
+    '宮城県': ['仙台'], '広島県': ['広島市', '福山'], '沖縄県': ['那覇', '国際通り'],
+    '香川県': ['高松', '丸亀', '瓦町', '坂出', '讃岐', 'さぬき'], '岡山県': ['岡山市', '倉敷'], '愛媛県': ['松山'], '徳島県': ['徳島市'], '高知県': ['高知市'],
+    '静岡県': ['浜松', '沼津', '熱海'], '石川県': ['金沢'], '新潟県': ['新潟市'], '長野県': ['長野市', '松本', '軽井沢'], '熊本県': ['熊本市'], '鹿児島県': ['鹿児島市'], '奈良県': ['奈良市'], '滋賀県': ['大津'],
+  };
+
+  // 文章から地域を数え、多い順に返す（エリア名と都道府県）
+  function detectAreas(texts) {
+    const hits = {};
+    const add = (term, pref, where, text) => {
+      const h = hits[term] || (hits[term] = { term, pref, count: 0, evidence: [] });
+      h.count++;
+      if (h.evidence.length < 2) h.evidence.push(where + '「' + snippet(text, term) + '」');
+    };
+    texts.forEach(({ text, where }) => {
+      const t = String(text || '');
+      PREFS.forEach((p) => { if (t.includes(p)) add(p.replace(/[都府県]$/, '') === '北海道' ? '北海道' : p.replace(/[都府県]$/, ''), p, where, t); });
+      PREF_SHORT_OK.forEach((s) => { const full = PREFS.find((p) => p.startsWith(s)); if (t.includes(s) && !t.includes(full)) add(s, full, where, t); });
+      Object.keys(AREA_PREF).forEach((pref) => AREA_PREF[pref].forEach((a) => { if (t.includes(a)) add(a.replace(/市$/, ''), pref, where, t); }));
+    });
+    const list = Object.values(hits).sort((a, b) => b.count - a.count);
+    // 都道府県ごとの合計で主な地域を決める
+    const prefCount = {};
+    list.forEach((h) => { prefCount[h.pref] = (prefCount[h.pref] || 0) + h.count; });
+    const prefs = Object.keys(prefCount).sort((a, b) => prefCount[b] - prefCount[a]);
+    return { list, prefs, prefCount };
+  }
+
+  function detectGenres(texts) {
+    const count = {};
+    const ev = {};
+    texts.forEach(({ text, where }) => {
+      const t = norm(text);
+      Object.keys(GENRE_SYNONYMS).forEach((g) => {
+        const w = GENRE_SYNONYMS[g].find((s) => t.includes(norm(s)));
+        if (w) { count[g] = (count[g] || 0) + 1; (ev[g] = ev[g] || []).length < 1 && ev[g].push(where + '「' + snippet(text, w) + '」'); }
+      });
+    });
+    return Object.keys(count).sort((a, b) => count[b] - count[a]).map((g) => ({ genre: g, count: count[g], evidence: ev[g] }));
+  }
+
+  // キャンペーンの条件で見つけた地域・ジャンルと、全国共通の判定を合わせる
+  function mergeDetected(a, texts) {
+    const ga = detectAreas(texts);
+    const gg = detectGenres(texts);
+    const areas = a.regions.map((r) => r.term);
+    ga.list.slice(0, 4).forEach((h) => { if (!areas.some((x) => x.includes(h.term) || h.term.includes(x))) areas.push(h.term); });
+    ga.prefs.slice(0, 2).forEach((p) => { const s = p === '北海道' ? p : p.replace(/[都府県]$/, ''); if (!areas.some((x) => x === s)) areas.push(s); });
+    const genres = a.genres.map((g) => g.genre);
+    gg.slice(0, 4).forEach((g) => { if (!genres.includes(g.genre)) genres.push(g.genre); });
+    const uniq = (arr) => Array.from(new Set(arr));
+    const regionEvidence = uniq(a.regions.flatMap((r) => r.evidence).concat(ga.list.slice(0, 3).flatMap((h) => h.evidence))).slice(0, 4);
+    const genreEvidence = uniq(a.genres.flatMap((g) => g.evidence).concat(gg.slice(0, 3).flatMap((g) => g.evidence))).slice(0, 4);
+    const mainArea = ga.prefs.length ? ga.prefs[0] + (ga.list.filter((h) => h.pref === ga.prefs[0] && h.term !== ga.prefs[0].replace(/[都府県]$/, '')).slice(0, 3).map((h) => h.term).join('・') ? '（' + ga.list.filter((h) => h.pref === ga.prefs[0] && h.term !== ga.prefs[0].replace(/[都府県]$/, '')).slice(0, 3).map((h) => h.term).join('・') + '）' : '') : '';
+    return { areas, genres, regionEvidence, genreEvidence, mainArea };
+  }
+
   // キャンペーンの地域語：来店可能エリア・所在地の市区町村/都道府県（「市」「県」を除いた形も）
   function regionTerms(camp) {
     const terms = [];
@@ -135,12 +207,12 @@
     const reacts = videos.map((v) => { const s = v.statistics || {}; if (s.likeCount === undefined) return null; return Number(s.likeCount) + Number(s.commentCount || 0); }).filter((n) => n !== null && isFinite(n));
     const cand = {
       displayName: sn.title || handle, handle, platform: 'youtube', profileUrl: url, youtubeChannelId: channel.id,
-      areas: a.regions.map((r) => r.term), genres: a.genres.map((g) => g.genre), hashtags: hashtagsOf(texts), formats: videos.length ? ['YouTube動画'] : [],
+      areas: mergeDetected(a, texts).areas, genres: mergeDetected(a, texts).genres, hashtags: hashtagsOf(texts), formats: videos.length ? ['YouTube動画'] : [],
       followers: subs === null ? I.fact(null, 'unknown') : I.fact(subs, 'confirmed', src + '（登録者数は1,000人超で上3桁に丸めた値）', today, '自動取得'),
       recentViews: views.length ? I.fact(views, 'confirmed', src + '（直近' + views.length + '本の再生数）', today, '自動取得') : I.fact(null, 'unknown'),
       recentReactions: reacts.length ? I.fact(reacts, 'confirmed', src + '（直近の高評価＋コメント数）', today, '自動取得') : I.fact(null, 'unknown'),
       postFrequency: videos.length >= 2 ? I.fact(frequency(videos.map((v) => v.snippet.publishedAt)), 'confirmed', src + '（直近動画の投稿日から計算）', today, '自動取得') : I.fact(null, 'unknown'),
-      auto: { platformSource: src, analyzedAt: today, regionEvidence: a.regions.flatMap((r) => r.evidence), genreEvidence: a.genres.flatMap((g) => g.evidence), foodRatio: Math.round(a.foodRatio * 100), country: sn.country || '', linked: linkedAccounts(sn.description) },
+      auto: Object.assign({ platformSource: src, analyzedAt: today, foodRatio: Math.round(a.foodRatio * 100), country: sn.country || '', linked: linkedAccounts(sn.description) }, pickAuto(mergeDetected(a, texts))),
     };
     return cand;
   }
@@ -159,13 +231,15 @@
     if (types.has('IMAGE') || types.has('CAROUSEL_ALBUM')) formats.push('フィード');
     return {
       displayName: bd.name || bd.username, handle: bd.username, platform: 'instagram', profileUrl: 'https://www.instagram.com/' + bd.username + '/',
-      areas: a.regions.map((r) => r.term), genres: a.genres.map((g) => g.genre), hashtags: hashtagsOf(texts), formats,
+      areas: mergeDetected(a, texts).areas, genres: mergeDetected(a, texts).genres, hashtags: hashtagsOf(texts), formats,
       followers: bd.followers_count === undefined ? I.fact(null, 'unknown') : I.fact(Number(bd.followers_count), 'confirmed', src, today, '自動取得'),
       recentReactions: reacts.length ? I.fact(reacts, 'confirmed', src + '（直近' + reacts.length + '投稿のいいね＋コメント）', today, '自動取得') : I.fact(null, 'unknown'),
       postFrequency: media.length >= 2 ? I.fact(frequency(media.map((m) => m.timestamp)), 'confirmed', src + '（直近投稿の日付から計算）', today, '自動取得') : I.fact(null, 'unknown'),
-      auto: { platformSource: src, analyzedAt: today, regionEvidence: a.regions.flatMap((r) => r.evidence), genreEvidence: a.genres.flatMap((g) => g.evidence), foodRatio: Math.round(a.foodRatio * 100), linked: linkedAccounts(bd.biography) },
+      auto: Object.assign({ platformSource: src, analyzedAt: today, foodRatio: Math.round(a.foodRatio * 100), linked: linkedAccounts(bd.biography) }, pickAuto(mergeDetected(a, texts))),
     };
   }
+
+  function pickAuto(m) { return { regionEvidence: m.regionEvidence, genreEvidence: m.genreEvidence, mainArea: m.mainArea }; }
 
   function frequency(dates) {
     const ts = dates.map((d) => new Date(d).getTime()).filter((n) => isFinite(n)).sort((a, b) => b - a);
@@ -212,7 +286,7 @@
     return plan;
   }
 
-  const api = { GENRE_SYNONYMS, regionTerms, genreTerms, buildQueries, analyzeTexts, hashtagsOf, linkedAccounts, fromYouTube, fromInstagram, frequency, followerOk, judge, autoSelect };
+  const api = { detectAreas, detectGenres, mergeDetected, GENRE_SYNONYMS, regionTerms, genreTerms, buildQueries, analyzeTexts, hashtagsOf, linkedAccounts, fromYouTube, fromInstagram, frequency, followerOk, judge, autoSelect };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.FS = root.FS || {}; root.FS.infauto = api; }
 })(typeof self !== 'undefined' ? self : this);

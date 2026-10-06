@@ -29,7 +29,7 @@
           const comp = I.completeness(c);
           const dup = I.findDuplicates(c, st.candidates);
           return '<tr class="clickable" data-id="' + c.id + '"><td>' + X.candNameHtml(c) + (dup.same.length ? '<span class="badge warn">重複の可能性</span>' : '') + (c.personId ? ' <span class="chip">別アカウントあり</span>' : '') + '</td>' +
-            '<td>' + esc(I.PLATFORMS[c.platform] || c.platform) + '</td><td class="small">' + esc(I.toList(c.areas).join('、') || '未確認') + '</td><td class="small">' + esc(I.toList(c.genres).join('、') || '未確認') + '</td>' +
+            '<td>' + esc(I.PLATFORMS[c.platform] || c.platform) + '</td><td class="small">' + (c.auto && c.auto.mainArea && !c.areasManual ? esc(c.auto.mainArea) + ' <span class="badge warn" title="プロフィール・投稿文からの推定">推定</span>' : esc(I.toList(c.areas).join('、') || '未確認')) + '</td><td class="small">' + esc(I.toList(c.genres).join('、') || '未確認') + '</td>' +
             '<td class="num">' + X.factView(c.followers, X.fmtNum) + '</td><td class="nowrap">' + X.feeView(c.fee) + '</td><td>' + comp.pct + '%</td><td class="small">' + esc(c.source.type) + '<div class="muted">' + esc(c.source.obtainedAt || '') + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">該当する候補者はいません。「候補者を登録」「検索結果をまとめて登録」「CSVから一括登録」で追加できます。</div>');
 
@@ -41,14 +41,14 @@
     U.$('#refetch', main).addEventListener('click', async () => {
       const AU = root.FS.infautoui;
       const c = AU.cfg();
-      const targets = st.candidates.filter((x) => (x.platform === 'instagram' || x.platform === 'youtube') && !I.isKnown(x.followers));
-      if (!targets.length) { U.toast('フォロワー数が未取得の Instagram・YouTube の候補はありません'); return; }
+      const targets = st.candidates.filter((x) => (x.platform === 'instagram' || x.platform === 'youtube') && (!I.isKnown(x.followers) || (!x.areasManual && !(x.auto && x.auto.mainArea !== undefined))));
+      if (!targets.length) { U.toast('フォロワー数・地域・ジャンルが未取得の Instagram・YouTube の候補はありません'); return; }
       const igN = targets.filter((x) => x.platform === 'instagram').length;
       if (igN && !(c.igToken && c.igUserId)) {
         await U.modal({ title: 'Instagram の取得設定が必要です', body: '<p>フォロワー数などを自動で取得するには、「評価の設定」画面の下にある「自動選定の設定」で、Instagram のアクセストークンと自社のInstagramビジネスアカウントIDを設定してください。</p>', confirmLabel: 'OK', hideCancel: true });
         return;
       }
-      const ok = await U.modal({ title: '未取得の情報をまとめて取得', body: '<p>フォロワー数が未取得の ' + targets.length + '件（Instagram ' + igN + '件・YouTube ' + (targets.length - igN) + '件）を、公式APIで取得します。</p>', confirmLabel: '取得する' });
+      const ok = await U.modal({ title: '未取得の情報をまとめて取得', body: '<p>フォロワー数・地域・ジャンルが未取得の ' + targets.length + '件（Instagram ' + igN + '件・YouTube ' + (targets.length - igN) + '件）を、公式APIで取得します。地域・ジャンルはプロフィールと投稿文から大まかに推定します（位置情報タグは公式APIで取得できないため使いません）。</p>', confirmLabel: '取得する' });
       if (!ok) return;
       U.toast('取得しています…');
       const log = await AU.enrich(targets, null);
