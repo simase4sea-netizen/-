@@ -1,0 +1,462 @@
+<title>インフルエンサー名簿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one working column — paste box on top, the roster below as a scannable list; status is a colored pill. */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --ink: #1b1f2e;
+  --muted: #5d6478;
+  --line: #dde0e8;
+  --accent: #3b45c4;
+  --accent-ink: #ffffff;
+  --accent-soft: #e8e9fb;
+  --ok: #1f7a4d; --ok-soft: #e3f3ea;
+  --warn: #9a5b00; --warn-soft: #fbf0dc;
+  --ng: #b42335; --ng-soft: #fbe5e8;
+  --mute-soft: #eceef3;
+  --font-body: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Yu Gothic', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12141b; --surface: #1b1e28; --ink: #e8eaf2; --muted: #9aa1b5; --line: #2e3242;
+    --accent: #8f97ff; --accent-ink: #12141b; --accent-soft: #262a4a;
+    --ok: #6fd3a0; --ok-soft: #173326; --warn: #f2bd5f; --warn-soft: #3a2d14; --ng: #ff8b98; --ng-soft: #3e1a20; --mute-soft: #252836;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12141b; --surface: #1b1e28; --ink: #e8eaf2; --muted: #9aa1b5; --line: #2e3242;
+  --accent: #8f97ff; --accent-ink: #12141b; --accent-soft: #262a4a;
+  --ok: #6fd3a0; --ok-soft: #173326; --warn: #f2bd5f; --warn-soft: #3a2d14; --ng: #ff8b98; --ng-soft: #3e1a20; --mute-soft: #252836;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.7 var(--font-body); padding-inline: 16px; padding-block: 20px 48px; }
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h2 { font-size: 17px; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.tally { display: flex; flex-wrap: wrap; gap: 6px; }
+.tally span { font-size: 12px; padding: 2px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; font-size: 14px; border-radius: 8px; padding: 8px 16px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+button.ghost { border-color: transparent; background: transparent; color: var(--muted); padding: 4px 8px; }
+button.danger { color: var(--ng); border-color: var(--ng); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.msg { font-size: 13px; padding: 8px 12px; border-radius: 8px; }
+.msg.ok { background: var(--ok-soft); color: var(--ok); }
+.msg.warn { background: var(--warn-soft); color: var(--warn); }
+.msg.ng { background: var(--ng-soft); color: var(--ng); }
+.hint { font-size: 12px; color: var(--muted); margin: 0; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 12px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.url { font-family: var(--font-mono); font-size: 12px; word-break: break-all; color: var(--muted); }
+.plat { display: inline-block; font-family: var(--font-mono); font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.new { background: var(--ok-soft); color: var(--ok); }
+.pill.dup { background: var(--mute-soft); color: var(--muted); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; }
+.list { display: grid; gap: 0; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.item:last-child { border-bottom: 0; }
+.who { display: grid; gap: 4px; min-width: 0; }
+.who-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.handle { font-weight: 700; color: var(--ink); text-decoration: none; word-break: break-all; }
+.handle:hover { text-decoration: underline; }
+.meta { font-size: 12px; color: var(--muted); }
+.fields { display: grid; grid-template-columns: 1.2fr .8fr 1fr; gap: 8px; grid-column: 1 / -1; }
+.fields input, .fields select { padding: 6px 8px; font-size: 13px; }
+.fields .memo { grid-column: 1 / -1; }
+.side { display: flex; gap: 4px; align-items: start; }
+.st { font-weight: 700; }
+.st[data-s="未接触"] { color: var(--muted); }
+.st[data-s="連絡済み"], .st[data-s="返信あり"] { color: var(--accent); }
+.st[data-s="提案中"] { color: var(--warn); }
+.st[data-s="成約"] { color: var(--ok); }
+.st[data-s="見送り"] { color: var(--ng); }
+.confirm { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--ng); }
+.empty { text-align: center; padding: 28px 12px; color: var(--muted); display: grid; gap: 6px; }
+.empty b { color: var(--ink); }
+.example { font-family: var(--font-mono); font-size: 12px; background: var(--bg); border-radius: 8px; padding: 8px 12px; text-align: left; display: inline-block; margin: 4px auto 0; }
+@media (max-width: 640px) {
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters input { grid-column: 1 / -1; }
+  .fields { grid-template-columns: 1fr 1fr; }
+  .fields .name { grid-column: 1 / -1; }
+  th.hide-sm, td.hide-sm { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>インフルエンサー名簿</h1>
+      <p class="lead">プロフィールURLをまとめて貼り付けて登録し、連絡状況を管理します。</p>
+    </div>
+    <div class="tally" id="tally" aria-label="状態ごとの件数"></div>
+  </header>
+
+  <section class="panel" aria-labelledby="bulk-h">
+    <div class="panel-head">
+      <h2 id="bulk-h">URLをまとめて登録</h2>
+      <p class="hint">Instagram・TikTok・YouTube・X・Threads・Facebook・note・lit.link など</p>
+    </div>
+    <label for="paste">1行に1件。メモや文章ごと貼り付けても、URLだけを読み取ります。
+      <textarea id="paste" rows="7" placeholder="https://www.instagram.com/example_gourmet/&#10;https://www.tiktok.com/@example_foodie&#10;https://www.youtube.com/@example_channel"></textarea>
+    </label>
+    <div class="row">
+      <label for="bulkStatus">登録時の状態
+        <select id="bulkStatus"></select>
+      </label>
+      <label for="bulkSource">入手元・メモ（任意・全件に付けます）
+        <input id="bulkSource" placeholder="例：10月リサーチ分">
+      </label>
+    </div>
+    <div class="actions">
+      <button class="primary" id="parseBtn" type="button">読み取る</button>
+      <button id="clearBtn" type="button">クリア</button>
+    </div>
+    <div id="preview" hidden></div>
+  </section>
+
+  <section class="panel" aria-labelledby="list-h">
+    <div class="panel-head">
+      <h2 id="list-h">登録済み <span id="countLabel" class="hint"></span></h2>
+      <div class="actions"><button id="csvBtn" type="button" hidden>CSVで保存</button></div>
+    </div>
+    <div class="filters">
+      <input id="q" type="search" placeholder="アカウント名・名前・メモで検索" aria-label="検索">
+      <select id="fPlat" aria-label="SNSで絞り込み"><option value="">すべてのSNS</option></select>
+      <select id="fStatus" aria-label="状態で絞り込み"><option value="">すべての状態</option></select>
+    </div>
+    <div id="dbMsg" hidden></div>
+    <div class="list" id="list">
+      <div class="empty" id="emptyState">
+        <b>まだ登録がありません</b>
+        <span>上の欄にプロフィールURLを貼り付けて「読み取る」を押すと、ここに一覧で表示されます。</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const STATUSES = ['未接触', '連絡済み', '返信あり', '提案中', '成約', '見送り'];
+const PLATFORMS = {
+  instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', threads: 'Threads',
+  facebook: 'Facebook', note: 'note', linkpage: 'リンク集', blog: 'ブログ', web: 'Web',
+};
+const COLL = 'influencers';
+
+// ---------- 小さな DOM ヘルパー ----------
+const $ = (id) => document.getElementById(id);
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'text') el.textContent = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+function msg(box, kind, text) {
+  box.replaceChildren(h('div', { class: `msg ${kind}`, text }));
+  box.hidden = false;
+}
+
+// ---------- URL の読み取り ----------
+const KNOWN_HOSTS = 'instagram\\.com|tiktok\\.com|youtube\\.com|youtu\\.be|x\\.com|twitter\\.com|threads\\.net|threads\\.com|facebook\\.com|fb\\.com|note\\.com|lit\\.link|linktr\\.ee|ameblo\\.jp';
+const URL_RE = new RegExp(`https?:\\/\\/[^\\s"'<>（）「」、。]+|(?:www\\.)?(?:${KNOWN_HOSTS})\\/[^\\s"'<>（）「」、。]+`, 'gi');
+
+function fnv(str) {
+  let x = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { x ^= str.charCodeAt(i); x = Math.imul(x, 0x01000193) >>> 0; }
+  return x.toString(16).padStart(8, '0');
+}
+const safeId = (s) => /^[A-Za-z0-9_.~:@+-]{1,180}$/.test(s) && s !== '.' && s !== '..';
+
+function parseOne(raw) {
+  let u;
+  try { u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); } catch { return { raw, error: 'URLとして読み取れません' }; }
+  const host = u.hostname.toLowerCase().replace(/^(www\.|m\.|mobile\.|vm\.|vt\.)/, '');
+  const seg = u.pathname.split('/').filter(Boolean).map((s) => decodeURIComponent(s));
+  const first = seg[0] || '';
+  const out = { raw, platform: 'web', handle: '', url: '', note: '' };
+  const bad = (n) => Object.assign(out, { note: n });
+
+  if (host === 'instagram.com') {
+    out.platform = 'instagram';
+    if (['p', 'reel', 'reels', 'tv', 'stories', 'explore'].includes(first)) {
+      if (first === 'stories' && seg[1]) out.handle = seg[1];
+      else bad('投稿のURLのため、アカウントが特定できません');
+    } else out.handle = first;
+    if (out.handle) out.url = `https://www.instagram.com/${out.handle}/`;
+  } else if (host === 'tiktok.com') {
+    out.platform = 'tiktok';
+    if (first.startsWith('@')) { out.handle = first.slice(1); out.url = `https://www.tiktok.com/@${out.handle}`; } else bad('短縮URLまたは動画のURLのため、アカウントが特定できません');
+  } else if (host === 'youtube.com' || host === 'youtu.be') {
+    out.platform = 'youtube';
+    if (first.startsWith('@')) { out.handle = first.slice(1); out.url = `https://www.youtube.com/@${out.handle}`; }
+    else if (['channel', 'c', 'user'].includes(first) && seg[1]) { out.handle = seg[1]; out.url = `https://www.youtube.com/${first}/${seg[1]}`; }
+    else bad('動画のURLのため、チャンネルが特定できません');
+  } else if (host === 'x.com' || host === 'twitter.com') {
+    out.platform = 'x';
+    if (first && !['i', 'intent', 'home', 'search', 'hashtag', 'share', 'explore', 'settings'].includes(first)) { out.handle = first; out.url = `https://x.com/${first}`; }
+    else bad('アカウントのURLではありません');
+  } else if (host === 'threads.net' || host === 'threads.com') {
+    out.platform = 'threads';
+    if (first.startsWith('@')) { out.handle = first.slice(1); out.url = `https://www.threads.com/@${out.handle}`; } else bad('アカウントのURLではありません');
+  } else if (host === 'facebook.com' || host === 'fb.com') {
+    out.platform = 'facebook';
+    if (first === 'profile.php' && u.searchParams.get('id')) { out.handle = u.searchParams.get('id'); out.url = `https://www.facebook.com/profile.php?id=${out.handle}`; }
+    else if (first && !['share', 'watch', 'groups', 'events', 'photo', 'reel', 'story.php', 'permalink.php'].includes(first)) { out.handle = first; out.url = `https://www.facebook.com/${first}`; }
+    else bad('アカウントのURLではありません');
+  } else if (host === 'note.com') {
+    out.platform = 'note';
+    if (first) { out.handle = first; out.url = `https://note.com/${first}`; } else bad('アカウントのURLではありません');
+  } else if (host === 'lit.link' || host === 'linktr.ee') {
+    out.platform = 'linkpage';
+    if (first) { out.handle = first; out.url = `https://${host}/${first}`; }
+  } else if (host === 'ameblo.jp') {
+    out.platform = 'blog';
+    if (first) { out.handle = first; out.url = `https://ameblo.jp/${first}/`; }
+  }
+
+  if (!out.url) {
+    // 対応外のサイト・投稿URLは、そのままのURL（クエリと末尾の / を除く）で登録する
+    const path = u.pathname.replace(/\/+$/, '');
+    out.url = `https://${u.hostname.toLowerCase().replace(/^www\./, 'www.')}${path}`;
+    if (!out.handle && out.platform === 'web') out.handle = u.hostname.replace(/^www\./, '') + path;
+  }
+  out.label = out.handle && !out.note && ['instagram', 'tiktok', 'threads', 'x'].includes(out.platform) ? `@${out.handle}`
+    : out.platform === 'youtube' && out.url.includes('/@') ? `@${out.handle}` : out.handle || out.url;
+  const keyBase = out.platform !== 'web' && out.handle && !out.note ? `${out.platform}:${out.handle.toLowerCase()}` : null;
+  out.key = keyBase && safeId(keyBase) ? keyBase : `${out.platform}:h${fnv(out.url.toLowerCase())}`;
+  return out;
+}
+
+function extract(text) {
+  const found = [];
+  for (const m of text.matchAll(URL_RE)) found.push(m[0].replace(/[).,!?…]+$/, ''));
+  return found.map(parseOne);
+}
+
+// ---------- 状態 ----------
+let db = null; let user = null; let canWrite = true; let myId = null; let downloads = null;
+let rows = []; // 登録済み（スナップショットから）
+let pending = []; // 読み取り結果
+const writing = new Map(); // doc id -> 直列化用 Promise
+
+function fillSelect(sel, values, labels = values, keepFirst = true) {
+  const first = keepFirst ? [...sel.options].slice(0, 1) : [];
+  sel.replaceChildren(...first, ...values.map((v, i) => h('option', { value: v, text: labels[i] })));
+}
+fillSelect($('bulkStatus'), STATUSES, STATUSES, false);
+fillSelect($('fStatus'), STATUSES);
+fillSelect($('fPlat'), Object.keys(PLATFORMS), Object.values(PLATFORMS));
+
+// ---------- 読み取り・プレビュー ----------
+$('parseBtn').addEventListener('click', () => {
+  const text = $('paste').value;
+  const parsed = extract(text);
+  const seen = new Set();
+  const existing = new Set(rows.map((r) => r.id));
+  pending = parsed.map((p) => {
+    if (p.error) return { ...p, state: 'error' };
+    if (existing.has(p.key)) return { ...p, state: 'exists' };
+    if (seen.has(p.key)) return { ...p, state: 'dup' };
+    seen.add(p.key);
+    return { ...p, state: p.note ? 'check' : 'new' };
+  });
+  renderPreview();
+});
+$('clearBtn').addEventListener('click', () => { $('paste').value = ''; pending = []; renderPreview(); });
+
+function renderPreview() {
+  const box = $('preview');
+  if (!pending.length) {
+    if ($('paste').value.trim()) { msg(box, 'warn', 'URLが見つかりませんでした。https:// から始まるURLか、instagram.com/… の形で貼り付けてください。'); }
+    else box.hidden = true;
+    return;
+  }
+  const toAdd = pending.filter((p) => p.state === 'new' || p.state === 'check');
+  const label = { new: ['新規', 'new'], check: ['要確認', 'warn'], exists: ['登録済み', 'dup'], dup: ['重複', 'dup'], error: ['読取不可', 'warn'] };
+  const counts = Object.fromEntries(Object.keys(label).map((k) => [k, pending.filter((p) => p.state === k).length]));
+  const summary = `${pending.length}件のURLを読み取りました。新規 ${counts.new}件` +
+    (counts.check ? `・要確認 ${counts.check}件` : '') + (counts.exists ? `・登録済み ${counts.exists}件` : '') +
+    (counts.dup ? `・貼り付け内の重複 ${counts.dup}件` : '') + (counts.error ? `・読取不可 ${counts.error}件` : '');
+  const table = h('table', {},
+    h('thead', {}, h('tr', {}, h('th', { text: '判定' }), h('th', { text: 'SNS' }), h('th', { text: 'アカウント' }), h('th', { class: 'hide-sm', text: '登録するURL' }))),
+    h('tbody', {}, pending.map((p) => h('tr', {},
+      h('td', {}, h('span', { class: `pill ${label[p.state][1]}`, text: label[p.state][0] })),
+      h('td', {}, p.platform ? h('span', { class: 'plat', text: PLATFORMS[p.platform] }) : '—'),
+      h('td', {}, p.error ? h('span', { class: 'url', text: p.raw }) : h('div', {}, p.label || '—', p.note ? h('div', { class: 'hint', text: p.note }) : null)),
+      h('td', { class: 'hide-sm url', text: p.url || p.error || '' }),
+    ))));
+  const addBtn = h('button', { class: 'primary', type: 'button', disabled: !toAdd.length || !db || canWrite === false, onclick: () => registerAll(toAdd, addBtn) }, `${toAdd.length}件を登録する`);
+  const notes = [];
+  if (counts.check) notes.push(h('p', { class: 'hint', text: '「要確認」は投稿や動画のURLです。そのURLのまま登録されます。アカウントのURLに差し替えると管理しやすくなります。' }));
+  if (!db) notes.push(h('p', { class: 'hint', text: '保存先に接続できていないため、登録できません。Claude にサインインした状態で開いてください。' }));
+  else if (canWrite === false) notes.push(h('p', { class: 'hint', text: 'このページは閲覧のみの権限のため、登録できません。' }));
+  box.replaceChildren(h('div', { class: 'msg ok', text: summary }), h('div', { class: 'scroll' }, table), ...notes, h('div', { class: 'actions' }, addBtn));
+  box.hidden = false;
+}
+
+async function registerAll(items, btn) {
+  btn.disabled = true;
+  const now = new Date().toISOString();
+  const status = $('bulkStatus').value;
+  const source = $('bulkSource').value.trim();
+  let ok = 0; const failed = [];
+  for (const [i, p] of items.entries()) {
+    btn.textContent = `登録中… ${i + 1}/${items.length}`;
+    try {
+      await db.collection(COLL).doc(p.key).set({
+        platform: p.platform, handle: p.handle, label: p.label, url: p.url, name: '', followers: '', status,
+        memo: source, sourceUrl: p.raw, createdAt: now, createdBy: myId, updatedAt: now, updatedBy: myId,
+      });
+      ok++;
+    } catch (e) {
+      failed.push(p);
+      if (e?.code === 'invalid_argument') { canWrite = false; break; }
+      if (e?.code === 'quota_exceeded') break;
+    }
+  }
+  const box = $('preview');
+  if (failed.length) {
+    pending = failed.map((p) => ({ ...p, state: p.note ? 'check' : 'new' }));
+    renderPreview();
+    const why = canWrite === false ? '登録する権限がありません。' : '保存できませんでした。時間をおいてもう一度「登録する」を押してください。';
+    box.prepend(h('div', { class: 'msg ng', text: `${ok}件を登録しました。残り${failed.length}件は${why}` }));
+  } else {
+    pending = [];
+    $('paste').value = '';
+    msg(box, 'ok', `${ok}件を登録しました。`);
+  }
+}
+
+// ---------- 一覧 ----------
+['q', 'fPlat', 'fStatus'].forEach((id) => $(id).addEventListener('input', renderList));
+
+function serialWrite(id, fn) {
+  const prev = writing.get(id) || Promise.resolve();
+  const next = prev.catch(() => {}).then(fn);
+  writing.set(id, next);
+  return next;
+}
+
+async function saveField(id, patch, input) {
+  try {
+    await serialWrite(id, () => db.collection(COLL).doc(id).update({ ...patch, updatedAt: new Date().toISOString(), updatedBy: myId }));
+    input?.classList.remove('err');
+  } catch (e) {
+    if (e?.code === 'invalid_argument') { canWrite = false; renderList(); }
+    msg($('dbMsg'), 'ng', '変更を保存できませんでした。もう一度お試しください。');
+  }
+}
+
+async function renderList() {
+  const q = $('q').value.trim().toLowerCase();
+  const fp = $('fPlat').value; const fs = $('fStatus').value;
+  const shown = rows.filter((r) => (!fp || r.platform === fp) && (!fs || r.status === fs) &&
+    (!q || [r.handle, r.name, r.memo, r.url].join(' ').toLowerCase().includes(q)));
+  $('countLabel').textContent = rows.length ? `${shown.length} / ${rows.length}件` : '';
+  const tally = STATUSES.map((s) => [s, rows.filter((r) => r.status === s).length]).filter(([, n]) => n);
+  $('tally').replaceChildren(...(rows.length ? [h('span', { text: `合計 ${rows.length}` }), ...tally.map(([s, n]) => h('span', { text: `${s} ${n}` }))] : []));
+  $('csvBtn').hidden = !downloads || !rows.length;
+
+  const list = $('list');
+  if (!rows.length) { list.replaceChildren($('emptyState') || emptyState()); return; }
+  if (!shown.length) { list.replaceChildren(h('div', { class: 'empty', text: '条件に合う登録はありません。' })); return; }
+
+  const people = user ? await user.profiles([...new Set(shown.map((r) => r.createdBy).filter(Boolean))]) : {};
+  const ro = canWrite === false;
+  list.replaceChildren(...shown.map((r) => {
+    const by = r.createdBy && people[r.createdBy] ? (people[r.createdBy].name || 'メンバー') : '';
+    const del = h('button', { class: 'ghost', type: 'button', 'aria-label': `${r.handle} を削除`, hidden: ro, text: '削除' });
+    const side = h('div', { class: 'side' }, del);
+    del.addEventListener('click', () => {
+      side.replaceChildren(h('span', { class: 'confirm' }, '削除しますか？',
+        h('button', { class: 'danger', type: 'button', text: '削除する', onclick: async () => {
+          try { await serialWrite(r.id, () => db.collection(COLL).doc(r.id).delete()); } catch { msg($('dbMsg'), 'ng', '削除できませんでした。'); }
+        } }),
+        h('button', { type: 'button', text: 'やめる', onclick: () => side.replaceChildren(del) })));
+    });
+    const field = (cls, key, placeholder, type = 'text') => {
+      const input = h('input', { class: cls, type, value: r[key] || '', placeholder, 'aria-label': placeholder, disabled: ro });
+      input.addEventListener('change', () => { if (input.value.trim() !== (r[key] || '')) saveField(r.id, { [key]: input.value.trim() }, input); });
+      return input;
+    };
+    const status = h('select', { class: 'st', 'data-s': r.status, 'aria-label': '状態', disabled: ro }, STATUSES.map((s) => h('option', { value: s, text: s, selected: s === r.status })));
+    status.addEventListener('change', () => { status.dataset.s = status.value; saveField(r.id, { status: status.value }, status); });
+    return h('article', { class: 'item' },
+      h('div', { class: 'who' },
+        h('div', { class: 'who-top' },
+          h('span', { class: 'plat', text: PLATFORMS[r.platform] || r.platform }),
+          h('a', { class: 'handle', href: r.url, target: '_blank', rel: 'noopener', text: r.label || r.handle || r.url })),
+        h('div', { class: 'meta', text: `登録 ${String(r.createdAt || '').slice(0, 10)}${by ? `・${by}` : ''}` })),
+      side,
+      h('div', { class: 'fields' },
+        h('div', { class: 'name' }, field('', 'name', '名前・屋号')),
+        field('', 'followers', 'フォロワー数'),
+        status,
+        h('div', { class: 'memo' }, field('', 'memo', 'メモ（ジャンル・地域・連絡先の確認状況など）'))));
+  }));
+}
+function emptyState() {
+  return h('div', { class: 'empty', id: 'emptyState' }, h('b', { text: 'まだ登録がありません' }),
+    h('span', { text: '上の欄にプロフィールURLを貼り付けて「読み取る」を押すと、ここに一覧で表示されます。' }));
+}
+
+// ---------- CSV ----------
+$('csvBtn').addEventListener('click', async () => {
+  const cols = [['platform', 'SNS'], ['handle', 'アカウント'], ['url', 'URL'], ['name', '名前・屋号'], ['followers', 'フォロワー数'], ['status', '状態'], ['memo', 'メモ'], ['createdAt', '登録日時']];
+  const esc = (v) => { const s = String(v ?? ''); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = [cols.map((c) => c[1]).join(','), ...rows.map((r) => cols.map(([k]) => esc(k === 'platform' ? PLATFORMS[r[k]] || r[k] : r[k])).join(','))];
+  try {
+    await downloads.save({ filename: `influencers_${new Date().toISOString().slice(0, 10)}.csv`, data: '﻿' + lines.join('\r\n') + '\r\n' });
+  } catch (e) {
+    if (e?.code !== 'declined') msg($('dbMsg'), 'warn', 'CSVを保存できませんでした。');
+  }
+});
+
+// ---------- 起動 ----------
+(async function start() {
+  if (!window.claude?.use) { msg($('dbMsg'), 'warn', '保存先に接続できません。Claude の画面から開いてください。URLの読み取りは使えます。'); return; }
+  const [d, u, dl] = await Promise.all([claude.use('db'), claude.use('user'), claude.use('downloads')]);
+  db = d; user = u; downloads = dl;
+  if (!db) { msg($('dbMsg'), 'warn', '保存先に接続できません。Claude にサインインした状態で開いてください。URLの読み取りは使えます。'); renderPreview(); return; }
+  if (user) {
+    myId = await user.id();
+    const can = await user.can('data.write');
+    if (can === false) canWrite = false;
+  }
+  db.collection(COLL).orderBy('createdAt', 'desc').limit(1000).onSnapshot((snap) => {
+    rows = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    renderList();
+    if (pending.length) renderPreview();
+  }, (e) => {
+    if (e?.code !== 'revoked') msg($('dbMsg'), 'ng', '一覧を読み込めなくなりました。ページを開き直してください。');
+  });
+  renderList();
+})();
+</script>
