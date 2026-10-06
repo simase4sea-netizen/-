@@ -27,8 +27,13 @@
     };
   }
 
+  // 表示名が無い（まだ取得していない）場合はアカウント名を表示する
   function candLabel(c) {
-    return (c.displayName || c.handle || '名称未入力') + (c.handle ? '（@' + c.handle + '）' : '');
+    if (!c.displayName) return c.handle ? '@' + c.handle : '名称未入力';
+    return c.displayName + (c.handle ? '（@' + c.handle + '）' : '');
+  }
+  function candNameHtml(c) {
+    return c.displayName ? '<b>' + U.esc(c.displayName) + '</b><div class="small muted">@' + U.esc(c.handle) + '</div>' : '<b>@' + U.esc(c.handle || '名称未入力') + '</b>';
   }
 
   // 事実（値・状態・取得元・確認日・確認者）の入力欄
@@ -148,5 +153,5 @@
   }
 
   root.FS = root.FS || {};
-  root.FS.infui = { inf, today, newCandidate, candLabel, factEditor, readFact, factView, feeView, fmtNum, scoreView, linkFor, ensureLink, statusSelect, changeStatus, pushHistory, describeFact, prNotice };
+  root.FS.infui = { inf, today, newCandidate, candLabel, candNameHtml, factEditor, readFact, factView, feeView, fmtNum, scoreView, linkFor, ensureLink, statusSelect, changeStatus, pushHistory, describeFact, prNotice };
 })(self);

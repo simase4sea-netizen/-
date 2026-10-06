@@ -18,15 +18,17 @@
     const q = sessionStorage.getItem('cand-q') || '';
     const pf = sessionStorage.getItem('cand-pf') || '';
     const rows = st.candidates.filter((c) => I.matchesText(c, q) && (!pf || c.platform === pf)).sort((a, b) => b.updatedAt - a.updatedAt);
+    const ac = root.FS.infautoui.cfg();
     main.innerHTML = '<h1>候補者データベース</h1><p class="lead">インフルエンサー候補を登録・管理します。確認できない情報は「未確認」のままにし、数値には取得元と確認日を記録します。</p>' +
+      (!(ac.igToken && ac.igUserId) && st.candidates.some((x) => x.platform === 'instagram' && !I.isKnown(x.followers)) ? '<div class="alert warn">Instagram のフォロワー数・活動地域などを自動で取得するには、<a href="#/inf/settings">評価の設定 → 自動選定の設定</a>で Instagram のアクセストークンを設定してください。設定後、「未取得の情報をまとめて取得」で登録済みの候補にも反映できます。</div>' : '') +
       '<div class="row" style="margin-bottom:10px"><div class="field" style="flex:2 1 240px"><label>検索（地域・駅名・料理・ハッシュタグ・名前）</label><input type="search" id="q" value="' + esc(q) + '" placeholder="例：高松 スイーツ"></div>' +
       '<div class="field"><label>SNS</label><select id="pf"><option value="">すべて</option>' + Object.keys(I.PLATFORMS).map((k) => '<option value="' + k + '"' + (pf === k ? ' selected' : '') + '>' + I.PLATFORMS[k] + '</option>').join('') + '</select></div></div>' +
-      '<div class="btns" style="margin-bottom:12px"><button class="btn primary" id="bulk">URLを一括登録</button><button class="btn" id="add">＋ 1件ずつ登録</button><button class="btn" id="search">検索結果をまとめて登録</button><label class="btn">CSVから一括登録<input type="file" id="csvIn" accept=".csv,.tsv,.txt" hidden></label><button class="btn" id="csvOut">CSVで書き出す（' + rows.length + '件）</button><button class="btn" id="tpl">CSVのひな形</button></div>' +
+      '<div class="btns" style="margin-bottom:12px"><button class="btn primary" id="bulk">URLを一括登録</button><button class="btn" id="refetch">未取得の情報をまとめて取得</button><button class="btn" id="add">＋ 1件ずつ登録</button><button class="btn" id="search">検索結果をまとめて登録</button><label class="btn">CSVから一括登録<input type="file" id="csvIn" accept=".csv,.tsv,.txt" hidden></label><button class="btn" id="csvOut">CSVで書き出す（' + rows.length + '件）</button><button class="btn" id="tpl">CSVのひな形</button></div>' +
       (rows.length ? '<div class="panel table-wrap" style="padding:0"><table class="tbl"><thead><tr><th>候補者</th><th>SNS</th><th>活動地域</th><th>ジャンル</th><th class="num">フォロワー数</th><th>費用</th><th>情報の充足度</th><th>取得元</th></tr></thead><tbody>' +
         rows.map((c) => {
           const comp = I.completeness(c);
           const dup = I.findDuplicates(c, st.candidates);
-          return '<tr class="clickable" data-id="' + c.id + '"><td><b>' + esc(c.displayName || '名称未入力') + '</b><div class="small muted">@' + esc(c.handle) + '</div>' + (dup.same.length ? '<span class="badge warn">重複の可能性</span>' : '') + (c.personId ? ' <span class="chip">別アカウントあり</span>' : '') + '</td>' +
+          return '<tr class="clickable" data-id="' + c.id + '"><td>' + X.candNameHtml(c) + (dup.same.length ? '<span class="badge warn">重複の可能性</span>' : '') + (c.personId ? ' <span class="chip">別アカウントあり</span>' : '') + '</td>' +
             '<td>' + esc(I.PLATFORMS[c.platform] || c.platform) + '</td><td class="small">' + esc(I.toList(c.areas).join('、') || '未確認') + '</td><td class="small">' + esc(I.toList(c.genres).join('、') || '未確認') + '</td>' +
             '<td class="num">' + X.factView(c.followers, X.fmtNum) + '</td><td class="nowrap">' + X.feeView(c.fee) + '</td><td>' + comp.pct + '%</td><td class="small">' + esc(c.source.type) + '<div class="muted">' + esc(c.source.obtainedAt || '') + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty">該当する候補者はいません。「候補者を登録」「検索結果をまとめて登録」「CSVから一括登録」で追加できます。</div>');
@@ -36,6 +38,23 @@
     U.$('#add', main).addEventListener('click', () => { location.hash = '#/inf/cand/new'; });
     U.$('#search', main).addEventListener('click', () => registerSearch(null, () => list(main)));
     U.$('#bulk', main).addEventListener('click', () => bulkUrls(null, () => list(main)));
+    U.$('#refetch', main).addEventListener('click', async () => {
+      const AU = root.FS.infautoui;
+      const c = AU.cfg();
+      const targets = st.candidates.filter((x) => (x.platform === 'instagram' || x.platform === 'youtube') && !I.isKnown(x.followers));
+      if (!targets.length) { U.toast('フォロワー数が未取得の Instagram・YouTube の候補はありません'); return; }
+      const igN = targets.filter((x) => x.platform === 'instagram').length;
+      if (igN && !(c.igToken && c.igUserId)) {
+        await U.modal({ title: 'Instagram の取得設定が必要です', body: '<p>フォロワー数などを自動で取得するには、「評価の設定」画面の下にある「自動選定の設定」で、Instagram のアクセストークンと自社のInstagramビジネスアカウントIDを設定してください。</p>', confirmLabel: 'OK', hideCancel: true });
+        return;
+      }
+      const ok = await U.modal({ title: '未取得の情報をまとめて取得', body: '<p>フォロワー数が未取得の ' + targets.length + '件（Instagram ' + igN + '件・YouTube ' + (targets.length - igN) + '件）を、公式APIで取得します。</p>', confirmLabel: '取得する' });
+      if (!ok) return;
+      U.toast('取得しています…');
+      const log = await AU.enrich(targets, null);
+      await U.modal({ title: '取得の結果', body: '<p>Instagram ' + log.igFetched + '件・YouTube ' + log.ytFetched + '件を取得しました。</p>' + (log.notes.length ? '<div class="alert warn small">' + log.notes.map(esc).join('<br>') + '</div>' : '') + (log.errors.length ? '<div class="alert danger small">取得できなかったもの：<br>' + log.errors.slice(0, 15).map(esc).join('<br>') + '</div>' : ''), confirmLabel: 'OK', hideCancel: true });
+      list(main);
+    });
     U.$$('tr[data-id]', main).forEach((tr) => tr.addEventListener('click', () => { location.hash = '#/inf/cand/' + tr.dataset.id; }));
     U.$('#csvOut', main).addEventListener('click', () => {
       U.download('インフルエンサー候補_' + X.today() + '.csv', I.toCsv(rows), 'text/csv;charset=utf-8');

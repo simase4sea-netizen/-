@@ -86,6 +86,17 @@ const SHOTS = process.env.SHOTS || '';
   const link = (c) => inf.links.find((l) => l.campaignId === camp.id && l.candidateId === c.id);
   assert.ok(link(ig) && ['候補', '優先候補'].includes(link(ig).status)); // 自動選定
   assert.equal(link(find('instagram', 'test_unknown_user')).status, '未確認');
+  // 表示名が無い候補はアカウント名で表示し、「名称未入力」と出さない
+  await p.goto(APP + '#/inf/cands');
+  const listText = await p.textContent('main');
+  assert.ok(!listText.includes('名称未入力'));
+  assert.match(listText, /@test_unknown_user/);
+  // まとめて再取得（取得できないものは未確認のまま）
+  await p.click('#refetch');
+  await p.click('.modal [data-act=ok]');
+  await p.waitForFunction(() => /取得の結果/.test((document.querySelector('.modal') || {}).textContent || ''), null, { timeout: 15000 });
+  assert.match(await p.textContent('.modal'), /test_unknown_user/);
+  await p.click('.modal [data-act=ok]');
   assert.deepEqual(other, []);
   assert.deepEqual(errs, []);
   await b.close();
