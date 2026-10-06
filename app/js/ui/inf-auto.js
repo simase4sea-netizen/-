@@ -13,7 +13,7 @@
   const AUTO_STATUSES = ['未確認', '候補', '優先候補'];
 
   function defaults() {
-    return { enabled: true, youtubeKey: '', igToken: '', igUserId: '', graphVersion: 'v23.0', intervalDays: 7, maxQueries: 4, resultsPerQuery: 25, videosPerChannel: 6, priorityCount: 3, autoDraft: true };
+    return { enabled: true, youtubeKey: '', igToken: '', igUserId: '', graphVersion: 'v26.0', intervalDays: 7, maxQueries: 4, resultsPerQuery: 25, videosPerChannel: 6, priorityCount: 3, autoDraft: true };
   }
   function cfg() {
     const st = X.inf();
@@ -308,7 +308,7 @@
       const vals = { intervalDays: n('#aInt', 1, 365), maxQueries: n('#aQ', 1, 20), resultsPerQuery: n('#aR', 1, 50), videosPerChannel: n('#aV', 3, 20), priorityCount: n('#aP', 0, 50) };
       if (Object.values(vals).some((v) => v === null)) { U.toast('数値の範囲を確認してください（更新間隔1〜365、検索語1〜20、取得件数1〜50、動画数3〜20、優先候補0〜50）', 'error'); return; }
       const ver = $('#aVer').value.trim();
-      if (!/^v\d+\.\d+$/.test(ver)) { U.toast('APIバージョンは「v23.0」のような形式で入力してください', 'error'); return; }
+      if (!/^v\d+\.\d+$/.test(ver)) { U.toast('APIバージョンは「v26.0」のような形式で入力してください', 'error'); return; }
       Object.assign(c, vals, { enabled: $('#aEn').checked, youtubeKey: $('#aYt').value.trim(), igToken: $('#aIg').value.trim(), igUserId: $('#aIgId').value.trim(), graphVersion: ver, autoDraft: $('#aDr').checked });
       S.log('自動選定の設定を変更しました', { type: 'settings', id: '', label: 'インフルエンサー自動選定' }, 'YouTube：' + (c.youtubeKey ? '設定あり' : 'なし') + '・Instagram：' + (c.igToken ? '設定あり' : 'なし') + '・更新間隔' + c.intervalDays + '日・優先候補' + c.priorityCount + '人');
       S.save(true);
