@@ -1,9 +1,11 @@
 import os, sys, json, math, subprocess
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 sys.path.insert(0, os.path.dirname(__file__))
-from content import POSTS
+import importlib
+CM = importlib.import_module(os.environ.get("CONTENT","content"))
+POSTS = CM.POSTS
 SP = "/tmp/claude-0/-home-user--/cebc66bb-03a5-556c-9d0e-3ff22925208d/scratchpad"
-SRC, OUT = f"{SP}/src", f"{SP}/out/11月分"
+SRC, OUT = f"{SP}/src", f"{SP}/out/" + os.environ.get("MONTH","11月分")
 FD = os.path.expanduser("~/fonts")
 def F(w, s): return ImageFont.truetype(f"{FD}/mpr-japanese-{w}.ttf", s)
 RED=(218,51,73); CREAM=(251,246,236); BROWN=(94,74,61); GREEN=(110,160,40); BLUE=(86,170,208); WHITE=(255,255,255)
@@ -175,8 +177,7 @@ def s_chara(sl):
 
 def s_list(sl):
     c = Image.new("RGB",(W,H),CREAM); d = ImageDraw.Draw(c); dots(d,0)
-    d.text((80,130), sl["head"], font=F(800,64), fill=RED)
-    y = 290
+    y = mtext(d, (80,130), sl["head"], F(800,64), RED, W-160, lh=1.25) + 60
     for i,it in enumerate(sl["items"]):
         h = theight(d, it, F(700,42), W-300, 1.4)
         d.rounded_rectangle((80,y,W-80,y+h+60), 30, fill=WHITE)
@@ -204,7 +205,35 @@ def s_end(sl):
     except FileNotFoundError: pass
     return c
 
-R = dict(cover=s_cover, photo=s_photo, text=s_text, textcover=s_textcover, quote=s_quote, fit=s_fit, chara=s_chara, list=s_list, end=s_end)
+def rmask(ph, r=28):
+    m = Image.new("L", ph.size, 0); ImageDraw.Draw(m).rounded_rectangle((0,0)+ph.size, r, fill=255); return m
+def s_gridcover(sl):
+    c = Image.new("RGB",(W,H),CREAM); d = ImageDraw.Draw(c)
+    g=16; cw=(W-80-g)//2; ch=(900-g)//2
+    for i,fid in enumerate(sl["imgs"][:4]):
+        ph = cover_fit(load(fid), cw, ch, fid); x=40+(i%2)*(cw+g); y=40+(i//2)*(ch+g)
+        c.paste(ph,(x,y),rmask(ph))
+    dots(d, 960)
+    pill(d, (60, 990), sl["tag"], F(800,34), RED)
+    y = mtext(d, (60, 1065), sl["title"], F(800,60), RED, W-120, lh=1.25)
+    if sl.get("sub"): d.text((62, y+6), sl["sub"], font=F(700,30), fill=BROWN)
+    logo_badge(c, (W-170, H-180), 120)
+    return c
+def s_grid(sl):
+    c = Image.new("RGB",(W,H),CREAM); d = ImageDraw.Draw(c)
+    n=len(sl["imgs"]); g=20
+    if n==2: cells=[(40,40,(W-80-g)//2,880),(40+(W-80-g)//2+g,40,(W-80-g)//2,880)]
+    else:
+        cw=(W-80-g)//2; ch=(880-g)//2; cells=[(40+(i%2)*(cw+g),40+(i//2)*(ch+g),cw,ch) for i in range(4)]
+    for i,(x,y,w,h) in enumerate(cells):
+        fid=sl["imgs"][i]; ph=cover_fit(load(fid), w, h, fid); c.paste(ph,(x,y),rmask(ph))
+        if sl.get("labels"):
+            lb=sl["labels"][i]; f=F(800,30); tw=tw_(d,lb,f)
+            d.rounded_rectangle((x+16,y+h-70,x+16+tw+40,y+h-16),27,fill=CREAM); d.text((x+36,y+h-62),lb,font=f,fill=RED)
+    d.text((60, 960), sl["head"], font=F(800,54), fill=RED)
+    if sl.get("body"): mtext(d, (60, 1060), sl["body"], F(500,36), BROWN, W-120, lh=1.55)
+    footer(d); return c
+R = dict(gridcover=s_gridcover, grid=s_grid, cover=s_cover, photo=s_photo, text=s_text, textcover=s_textcover, quote=s_quote, fit=s_fit, chara=s_chara, list=s_list, end=s_end)
 
 def reel(p, d):
     RW,RH = 1080,1920; tmp = f"{d}/_frames"; os.makedirs(tmp, exist_ok=True)
@@ -249,6 +278,6 @@ def main(only=None):
             for i,sl in enumerate(p["slides"]):
                 R[sl["type"]](sl).save(f"{d}/{i+1:02d}.png")
         else: reel(p, d)
-        open(f"{d}/キャプション.txt","w").write(p["caption"].strip()+"\n\n"+__import__("content").TAGS+"\n")
+        open(f"{d}/キャプション.txt","w").write(p["caption"].strip()+"\n\n"+CM.TAGS+"\n")
         print("done", p["no"])
 if __name__=="__main__": main(sys.argv[1:] or None)
